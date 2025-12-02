@@ -326,15 +326,15 @@ class GDPRManager {
         fields.forEach(field => {
             const label = texts[`${field.id}Label`] || field.id;
             const placeholder = texts[`${field.id}Placeholder`] || '';
-            const requiredMark = field.required ? ' *' : '';
+            const requiredMark = field.required ? '<span class="gdpr-required">*</span>' : '';
             const piiIcon = field.isPII ? `<span class="gdpr-pii-icon" title="${texts.piiIndicator || '🔒 Personal data'}">🔒</span>` : '';
 
             fieldsHTML += `
-                <div class="gdpr-form-field">
-                    <label class="gdpr-field-label">${label}${requiredMark} ${piiIcon}</label>
+                <div class="gdpr-form-group">
+                    <label class="gdpr-form-label">${label}${requiredMark} ${piiIcon}</label>
                     <input type="${field.type}"
                            name="${field.id}"
-                           class="gdpr-field-input"
+                           class="gdpr-form-input"
                            placeholder="${placeholder}"
                            ${field.required ? 'required' : ''}
                            ${field.validation?.minLength ? `minlength="${field.validation.minLength}"` : ''}
@@ -350,27 +350,28 @@ class GDPRManager {
 
         const checkboxText = texts.gdprCheckboxText || 'I agree to the processing of my personal data';
         const checkboxHTML = gdprCheckboxEnabled ? `
-            <div class="gdpr-form-field gdpr-checkbox-field">
-                <label class="gdpr-checkbox-label">
-                    <input type="checkbox" id="gdprFormCheckbox" ${gdprCheckboxRequired ? 'required' : ''}>
-                    <span>${checkboxText}</span>
-                    ${linkToPrivacy ? `<a href="${this.config.privacyPolicyUrl}" target="_blank" class="gdpr-link">${texts.privacyLinkText || 'Privacy Policy'}</a>` : ''}
+            <div class="gdpr-checkbox-group">
+                <input type="checkbox" class="gdpr-checkbox" id="gdprFormCheckbox" ${gdprCheckboxRequired ? 'required' : ''}>
+                <label class="gdpr-checkbox-text" for="gdprFormCheckbox">
+                    ${checkboxText}
+                    ${linkToPrivacy ? `<a href="${this.config.privacyPolicyUrl}" target="_blank" class="gdpr-policy-link">${texts.privacyLinkText || 'Privacy Policy'}</a>` : ''}
                 </label>
             </div>
         ` : '';
 
         return `
             <div class="gdpr-prechat-form" id="gdprPreChatForm">
-                <div class="gdpr-form-content">
-                    <div class="gdpr-form-title">${texts.formTitle || 'Start a Conversation'}</div>
-                    <div class="gdpr-form-subtitle">${texts.formSubtitle || 'Please fill out the form before starting the chat'}</div>
-                    <form id="gdprPreChatFormElement">
-                        ${fieldsHTML}
-                        ${checkboxHTML}
-                        <div class="gdpr-form-info">${texts.requiredFieldMark || '* - required field'}</div>
-                        <button type="submit" class="gdpr-btn gdpr-btn-submit">${texts.startChatButton || 'Start Chat'}</button>
-                    </form>
+                <div class="gdpr-prechat-header">
+                    <div class="gdpr-prechat-icon">📝</div>
+                    <h3 class="gdpr-prechat-title">${texts.formTitle || 'Start a Conversation'}</h3>
+                    <p class="gdpr-prechat-subtitle">${texts.formSubtitle || 'Please fill out the form before starting the chat'}</p>
                 </div>
+                <form id="gdprPreChatFormElement">
+                    ${fieldsHTML}
+                    ${checkboxHTML}
+                    <div class="gdpr-form-info">${texts.requiredFieldMark || '* - required field'}</div>
+                    <button type="submit" class="gdpr-btn gdpr-btn-accept">${texts.startChatButton || 'Start Chat'}</button>
+                </form>
             </div>
         `;
     }
@@ -577,6 +578,7 @@ class GDPRManager {
             form.classList.add('gdpr-hiding');
             setTimeout(() => form.remove(), 300);
         }
+        this.setChatInputDisabled(false);
     }
 
     showPreChatForm() {
@@ -589,6 +591,13 @@ class GDPRManager {
                 container.insertAdjacentHTML('afterbegin', this.renderPreChatForm());
             }
             this.setupEventListeners();
+            this.setChatInputDisabled(true);
+
+            // Фокус на первое поле формы
+            setTimeout(() => {
+                const firstInput = document.querySelector('#gdprPreChatForm .gdpr-form-input');
+                if (firstInput) firstInput.focus();
+            }, 100);
         }
     }
 
@@ -639,7 +648,8 @@ class GDPRManager {
         if (!this.isEnabled()) return false;
         if (!this.config.consentBanner?.blockChat) return false;
 
-        return !this.hasConsent();
+        // Блокируем если нет согласия ИЛИ если требуется pre-chat форма
+        return !this.hasConsent() || this.isPreChatRequired();
     }
 
     isReadyForChat() {

@@ -3852,19 +3852,40 @@
     accent-color: #667eea;
 }
 
-.gdpr-checkbox-label {
+.gdpr-checkbox-label,
+.gdpr-checkbox-text {
     font-size: 13px;
     color: #374151;
     line-height: 1.5;
 }
 
-.gdpr-checkbox-label a {
+.gdpr-checkbox-label a,
+.gdpr-checkbox-text a {
     color: #667eea;
     text-decoration: none;
 }
 
-.gdpr-checkbox-label a:hover {
+.gdpr-checkbox-label a:hover,
+.gdpr-checkbox-text a:hover {
     text-decoration: underline;
+}
+
+/* Информация о форме */
+.gdpr-form-info {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 16px;
+}
+
+.gdpr-required {
+    color: #ef4444;
+    margin-left: 2px;
+}
+
+.gdpr-pii-icon {
+    font-size: 12px;
+    margin-left: 4px;
+    cursor: help;
 }
 
 /* Кнопка отправки формы */
@@ -4166,8 +4187,13 @@
     border-color: rgba(102, 126, 234, 0.3);
 }
 
-.webchat-theme-dark .gdpr-checkbox-label {
+.webchat-theme-dark .gdpr-checkbox-label,
+.webchat-theme-dark .gdpr-checkbox-text {
     color: #d1d5db;
+}
+
+.webchat-theme-dark .gdpr-form-info {
+    color: #9ca3af;
 }
 
 .webchat-theme-dark .gdpr-btn-decline {
