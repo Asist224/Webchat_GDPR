@@ -178,58 +178,306 @@ const GlobalConfigSettings = {
         privacyPolicyVersion: '1.0',
         termsOfServiceUrl: '',
         cookiePolicyUrl: '',
+
+        // ═══════════════════════════════════════════════════════════
+        // БАННЕР СОГЛАСИЯ
+        // ═══════════════════════════════════════════════════════════
         consentBanner: {
             enabled: true,
-            blockChat: true,
-            position: 'bottom',
-            expireDays: 365,
-            showDeclineButton: true,
-            showPrivacyLink: true,
-            showCookieLink: false,
-            showTermsLink: false,
-            customText: null,
-            animation: 'slide'
+            blockChat: true,                   // Блокировать чат до получения согласия
+            position: 'bottom',                // 'top' | 'bottom' | 'center'
+            expireDays: 365,                   // Срок хранения согласия в днях
+            showDeclineButton: true,           // Показать кнопку отказа
+            showPrivacyLink: true,             // Показать ссылку на политику конфиденциальности
+            showCookieLink: false,             // Показать ссылку на политику cookies
+            showTermsLink: false,              // Показать ссылку на условия использования
+            customText: null,                  // Кастомный текст (null = использовать по умолчанию)
+            animation: 'slide'                 // 'slide' | 'fade' | 'none'
         },
+
+        // ═══════════════════════════════════════════════════════════
+        // ФОРМА СБОРА ДАННЫХ (Pre-Chat Form)
+        // ═══════════════════════════════════════════════════════════
         preChatForm: {
-            enabled: false,                      // По умолчанию выключена
-            showAfterConsent: true,
+            enabled: false,                    // По умолчанию выключена
+            showAfterConsent: true,            // Показывать после согласия с GDPR
+            skipIfDataExists: true,            // Пропустить если данные уже есть
+
+            // Поля формы с валидацией
             fields: [
-                { id: 'name', type: 'text', required: true, isPII: true },
-                { id: 'email', type: 'email', required: true, isPII: true }
+                {
+                    id: 'name',
+                    type: 'text',
+                    required: true,
+                    isPII: true,
+                    minLength: 2,
+                    maxLength: 100,
+                    pattern: null,
+                    validation: {
+                        minLength: 2,
+                        maxLength: 100,
+                        pattern: '^[a-zA-Zа-яА-ЯёЁіІїЇєЄ\\s\\-]+$',
+                        errorMessage: {
+                            ru: 'Введите корректное имя (минимум 2 символа)',
+                            en: 'Please enter a valid name (minimum 2 characters)'
+                        }
+                    }
+                },
+                {
+                    id: 'email',
+                    type: 'email',
+                    required: true,
+                    isPII: true,
+                    validation: {
+                        pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
+                        errorMessage: {
+                            ru: 'Введите корректный email адрес',
+                            en: 'Please enter a valid email address'
+                        }
+                    }
+                },
+                {
+                    id: 'phone',
+                    type: 'tel',
+                    required: false,
+                    isPII: true,
+                    validation: {
+                        pattern: '^[+]?[0-9\\s\\-()]{10,20}$',
+                        errorMessage: {
+                            ru: 'Введите корректный номер телефона',
+                            en: 'Please enter a valid phone number'
+                        }
+                    }
+                },
+                {
+                    id: 'company',
+                    type: 'text',
+                    required: false,
+                    isPII: false,
+                    validation: {
+                        maxLength: 200
+                    }
+                }
             ],
-            gdprCheckbox: { enabled: true, required: true, linkToPrivacy: true },
-            submitToWebhook: true
+
+            // Чекбокс согласия GDPR
+            gdprCheckbox: {
+                enabled: true,
+                required: true,
+                linkToPrivacy: true
+            },
+
+            // Отправка на вебхук
+            submitToWebhook: true,
+            webhookOnEveryField: false         // Отправлять после каждого поля или только после всей формы
         },
+
+        // ═══════════════════════════════════════════════════════════
+        // AI DISCLOSURE (Раскрытие использования AI)
+        // ═══════════════════════════════════════════════════════════
         aiDisclosure: {
             enabled: true,
-            showBadge: true,
-            showInWelcome: true
+            showBadge: true,                   // Показать значок AI
+            showInWelcome: true,               // Показать в приветственном сообщении
+            badgePosition: 'header',           // 'header' | 'footer' | 'both'
+            disclosureType: 'full'             // 'full' | 'minimal' | 'badge-only'
         },
+
+        // ═══════════════════════════════════════════════════════════
+        // КОНТРОЛЬ ПРИВАТНОСТИ (Privacy Controls)
+        // ═══════════════════════════════════════════════════════════
         privacyControls: {
             enabled: true,
-            showInHeader: true,
+            showInHeader: true,                // Показать иконку в заголовке
+            showInMenu: true,                  // Показать в меню
+
             options: {
-                viewData: true,
-                exportData: true,
-                deleteHistory: true,
-                revokeConsent: true,
-                deleteAllData: true
+                // Просмотр данных
+                viewData: {
+                    enabled: true,
+                    requiresVerification: false
+                },
+
+                // Экспорт данных
+                exportData: {
+                    enabled: true,
+                    formats: ['json', 'csv', 'pdf'],
+                    defaultFormat: 'json',
+                    requiresEmail: true,       // Отправить на email
+                    maxExportsPerDay: 5
+                },
+
+                // Удаление истории чата
+                deleteHistory: {
+                    enabled: true,
+                    requiresConfirmation: true,
+                    confirmationDelay: 5,      // Секунд на подтверждение
+                    softDelete: true           // Мягкое удаление (можно восстановить)
+                },
+
+                // Отзыв согласия
+                revokeConsent: {
+                    enabled: true,
+                    requiresConfirmation: true,
+                    confirmationDelay: 10,
+                    clearDataOnRevoke: true    // Удалить данные при отзыве
+                },
+
+                // Полное удаление всех данных
+                deleteAllData: {
+                    enabled: true,
+                    requiresConfirmation: true,
+                    confirmationDelay: 15,
+                    doubleConfirmation: true,  // Двойное подтверждение
+                    cooldownPeriod: 24         // Часов до возможности повторного запроса
+                }
             }
         },
+
+        // ═══════════════════════════════════════════════════════════
+        // МИНИМИЗАЦИЯ ДАННЫХ (Data Minimization)
+        // ═══════════════════════════════════════════════════════════
+        dataMinimization: {
+            enabled: true,
+            collectOnlyNecessary: true,        // Собирать только необходимые данные
+            anonymizeAfterDays: 90,            // Анонимизировать через N дней
+            autoDeleteInactiveDays: 365,       // Авто-удаление неактивных через N дней
+            piiMasking: {
+                enabled: true,
+                maskInLogs: true,              // Маскировать в логах
+                maskInExports: false           // Маскировать при экспорте
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // УПРАВЛЕНИЕ COOKIES
+        // ═══════════════════════════════════════════════════════════
+        cookieManagement: {
+            enabled: true,
+            strictMode: true,                  // Только необходимые cookies без согласия
+            categories: {
+                necessary: {
+                    enabled: true,
+                    required: true,            // Нельзя отключить
+                    cookies: ['session_id', 'gdpr_consent', 'language']
+                },
+                functional: {
+                    enabled: true,
+                    required: false,
+                    cookies: ['theme', 'preferences', 'chat_history_local']
+                },
+                analytics: {
+                    enabled: false,
+                    required: false,
+                    cookies: ['_ga', '_gid', 'analytics_session']
+                },
+                marketing: {
+                    enabled: false,
+                    required: false,
+                    cookies: []
+                }
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // ИСТОРИЯ ЧАТА
+        // ═══════════════════════════════════════════════════════════
+        chatHistory: {
+            enabled: true,
+            storeLocally: true,                // Хранить в localStorage
+            storeOnServer: false,              // Хранить на сервере
+            maxLocalMessages: 100,             // Макс. сообщений локально
+            maxServerMessages: 1000,           // Макс. сообщений на сервере
+            encryptLocal: false,               // Шифровать локальное хранилище
+            autoExpireDays: 30,                // Авто-удаление через N дней
+            allowUserDelete: true              // Позволить пользователю удалять
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // ХРАНЕНИЕ ДАННЫХ (Data Retention)
+        // ═══════════════════════════════════════════════════════════
+        dataRetention: {
+            enabled: true,
+            consentRecords: {
+                retentionDays: 1825,           // 5 лет для записей согласия
+                archiveAfterDays: 365
+            },
+            chatHistory: {
+                retentionDays: 365,            // 1 год для истории чата
+                archiveAfterDays: 90
+            },
+            userData: {
+                retentionDays: 730,            // 2 года для данных пользователя
+                anonymizeAfterDays: 365
+            },
+            logs: {
+                retentionDays: 90,             // 90 дней для логов
+                archiveAfterDays: 30
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // ИНДИКАТОРЫ БЕЗОПАСНОСТИ
+        // ═══════════════════════════════════════════════════════════
         securityIndicators: {
-            showSecureBadge: true
+            enabled: true,
+            showSecureBadge: true,             // Показать значок безопасности
+            showEncryptionStatus: true,        // Показать статус шифрования
+            showDataLocation: false,           // Показать где хранятся данные
+            badgePosition: 'header'            // 'header' | 'footer'
         },
+
+        // ═══════════════════════════════════════════════════════════
+        // ВЕБХУКИ (Webhooks)
+        // ═══════════════════════════════════════════════════════════
         webhooks: {
-            consent: '',
-            preChatForm: '',
-            dataAccess: '',
-            dataExport: '',
-            dataDelete: ''
+            // URL вебхуков для различных событий
+            consent: '',                       // URL для событий согласия
+            preChatForm: '',                   // URL для данных формы
+            dataAccess: '',                    // URL для запросов доступа к данным
+            dataExport: '',                    // URL для запросов экспорта
+            dataDelete: '',                    // URL для запросов удаления
+            consentRevoke: '',                 // URL для отзыва согласия
+
+            // Настройки запросов
+            timeout: 10000,                    // Таймаут в мс
+            retryAttempts: 3,                  // Количество повторных попыток
+            retryDelay: 1000,                  // Задержка между попытками в мс
+
+            // Заголовки
+            headers: {
+                'Content-Type': 'application/json',
+                'X-GDPR-Source': 'nexusmind-webchat'
+            },
+
+            // Включить логирование запросов
+            logRequests: true
         },
+
+        // ═══════════════════════════════════════════════════════════
+        // РАСШИРЕННЫЕ НАСТРОЙКИ
+        // ═══════════════════════════════════════════════════════════
         advanced: {
-            httpsOnly: false,                    // false для тестирования на localhost
-            debugMode: true,                     // Включить debug логи
-            storagePrefix: 'nexusmind_gdpr_'
+            httpsOnly: false,                  // false для тестирования на localhost
+            debugMode: true,                   // Включить debug логи
+            storagePrefix: 'nexusmind_gdpr_',  // Префикс для localStorage
+
+            // Геолокация
+            geoLocation: {
+                enabled: false,
+                detectCountry: false,          // Определять страну пользователя
+                euCountries: ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'],
+                strictForEU: true              // Строгий режим для EU
+            },
+
+            // Журнал аудита
+            auditLog: {
+                enabled: true,
+                logConsent: true,
+                logDataAccess: true,
+                logDataModification: true,
+                retentionDays: 1825            // 5 лет
+            }
         }
     }
 };

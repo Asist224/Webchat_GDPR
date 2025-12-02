@@ -400,6 +400,62 @@
             min-height: 100px;
         }
 
+        /* Дополнительные стили для form-input и form-select (используются в GDPR) */
+        .form-input,
+        .form-select {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: var(--white);
+            width: 100%;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .form-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 16px;
+            padding-right: 36px;
+        }
+
+        .form-input:disabled,
+        .form-select:disabled {
+            background: var(--light);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Стили для чекбоксов в list-editor (GDPR) */
+        .list-editor label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            cursor: pointer;
+        }
+
+        .list-editor input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
         /* Textarea для SVG кода - можно расширять во все стороны */
         #brandingLogoSvg {
             resize: both;
@@ -5353,7 +5409,17 @@
 
                 // GDPR - Информация о соответствии
                 'gdpr.compliance_info': 'Информация о соответствии',
-                'gdpr.compliance_text': 'Эта конфигурация помогает обеспечить соответствие GDPR, CCPA и другим законам о защите данных. Убедитесь, что у вас есть действующая политика конфиденциальности и все необходимые юридические документы.'
+                'gdpr.compliance_text': 'Эта конфигурация помогает обеспечить соответствие GDPR, CCPA и другим законам о защите данных. Убедитесь, что у вас есть действующая политика конфиденциальности и все необходимые юридические документы.',
+
+                // GDPR - Уведомления
+                'gdpr.notification.setting_updated': 'Настройка GDPR обновлена',
+                'gdpr.notification.settings_saved': 'Настройки GDPR сохранены!',
+                'gdpr.notification.enabled': 'GDPR режим включен',
+                'gdpr.notification.disabled': 'GDPR режим отключен',
+                'gdpr.notification.prechat_enabled': 'Pre-Chat форма включена',
+                'gdpr.notification.prechat_disabled': 'Pre-Chat форма отключена',
+                'gdpr.notification.webhook_updated': 'Webhook URL обновлен',
+                'gdpr.notification.invalid_url': 'Некорректный URL адрес'
             },
             en: {
                 // General
@@ -6167,7 +6233,17 @@
 
                 // GDPR - Compliance Info
                 'gdpr.compliance_info': 'Compliance Information',
-                'gdpr.compliance_text': 'This configuration helps ensure compliance with GDPR, CCPA, and other data protection laws. Make sure you have a valid privacy policy and all necessary legal documents.'
+                'gdpr.compliance_text': 'This configuration helps ensure compliance with GDPR, CCPA, and other data protection laws. Make sure you have a valid privacy policy and all necessary legal documents.',
+
+                // GDPR - Notifications
+                'gdpr.notification.setting_updated': 'GDPR setting updated',
+                'gdpr.notification.settings_saved': 'GDPR settings saved!',
+                'gdpr.notification.enabled': 'GDPR mode enabled',
+                'gdpr.notification.disabled': 'GDPR mode disabled',
+                'gdpr.notification.prechat_enabled': 'Pre-Chat form enabled',
+                'gdpr.notification.prechat_disabled': 'Pre-Chat form disabled',
+                'gdpr.notification.webhook_updated': 'Webhook URL updated',
+                'gdpr.notification.invalid_url': 'Invalid URL address'
             }
         };
 
@@ -8510,9 +8586,37 @@ function updateGDPRSetting(path, value) {
 
     // Помечаем что есть несохраненные изменения
     isDirty = true;
-    showSaveIndicator('changed', t('save.unsaved_changes'));
 
+    // Показываем контекстное уведомление
+    let notificationMessage = t('save.unsaved_changes');
+
+    // Специфичные сообщения для определенных настроек
+    if (path === 'enabled') {
+        notificationMessage = value ? t('gdpr.notification.enabled') : t('gdpr.notification.disabled');
+    } else if (path === 'preChatForm.enabled') {
+        notificationMessage = value ? t('gdpr.notification.prechat_enabled') : t('gdpr.notification.prechat_disabled');
+    } else if (path.startsWith('webhooks.') && typeof value === 'string') {
+        // Валидация URL для вебхуков
+        if (value && !isValidUrl(value)) {
+            showSaveIndicator('error', t('gdpr.notification.invalid_url'));
+            return;
+        }
+        notificationMessage = t('gdpr.notification.webhook_updated');
+    }
+
+    showSaveIndicator('changed', notificationMessage);
     console.log('🔒 GDPR Settings updated:', window.GlobalConfigSettings.gdpr);
+}
+
+// Валидация URL
+function isValidUrl(string) {
+    if (!string) return true; // Пустая строка допустима
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
 }
 
 // Загрузка GDPR настроек в форму
