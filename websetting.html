@@ -4261,6 +4261,15 @@
                     <p data-i18n="gdpr.subtitle">Управление соответствием GDPR и защитой данных пользователей</p>
                 </div>
 
+                <!-- Панель инструментов с кнопкой сохранения -->
+                <div class="toolbar">
+                    <div class="toolbar-right">
+                        <button class="btn btn-primary" onclick="saveGDPRSettings()">
+                            <span>💾</span> <span data-i18n="gdpr.save_changes">Сохранить изменения</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Основные настройки GDPR -->
                 <div class="settings-section">
                     <h3 class="settings-section-title">
@@ -5411,6 +5420,12 @@
                 'gdpr.compliance_info': 'Информация о соответствии',
                 'gdpr.compliance_text': 'Эта конфигурация помогает обеспечить соответствие GDPR, CCPA и другим законам о защите данных. Убедитесь, что у вас есть действующая политика конфиденциальности и все необходимые юридические документы.',
 
+                // GDPR - Кнопка сохранения
+                'gdpr.save_changes': 'Сохранить изменения',
+                'gdpr.saving': 'Сохранение настроек GDPR...',
+                'gdpr.saved': 'Настройки GDPR сохранены!',
+                'gdpr.save_error': 'Ошибка сохранения настроек GDPR',
+
                 // GDPR - Уведомления
                 'gdpr.notification.setting_updated': 'Настройка GDPR обновлена',
                 'gdpr.notification.settings_saved': 'Настройки GDPR сохранены!',
@@ -6234,6 +6249,12 @@
                 // GDPR - Compliance Info
                 'gdpr.compliance_info': 'Compliance Information',
                 'gdpr.compliance_text': 'This configuration helps ensure compliance with GDPR, CCPA, and other data protection laws. Make sure you have a valid privacy policy and all necessary legal documents.',
+
+                // GDPR - Save button
+                'gdpr.save_changes': 'Save Changes',
+                'gdpr.saving': 'Saving GDPR settings...',
+                'gdpr.saved': 'GDPR settings saved!',
+                'gdpr.save_error': 'Error saving GDPR settings',
 
                 // GDPR - Notifications
                 'gdpr.notification.setting_updated': 'GDPR setting updated',
@@ -8619,6 +8640,152 @@ function isValidUrl(string) {
     }
 }
 
+// ═══════════════════════════════════════════════════════════
+// СОХРАНЕНИЕ GDPR НАСТРОЕК
+// ═══════════════════════════════════════════════════════════
+function saveGDPRSettings() {
+    console.log('💾 Сохранение GDPR настроек');
+
+    // Получаем существующие GlobalConfigSettings
+    const existingGlobalSettings = window.GlobalConfigSettings || {};
+    const existingGdpr = existingGlobalSettings.gdpr || {};
+
+    // Собираем GDPR настройки из формы
+    const gdprSettings = {
+        // Сохраняем все существующие настройки
+        ...existingGdpr,
+
+        // Основные настройки
+        enabled: document.getElementById('gdprEnabled')?.checked || false,
+        mode: document.getElementById('gdprMode')?.value || 'strict',
+        privacyPolicyUrl: document.getElementById('gdprPrivacyUrl')?.value || '',
+        privacyPolicyVersion: existingGdpr.privacyPolicyVersion || '1.0',
+        termsOfServiceUrl: document.getElementById('gdprTermsUrl')?.value || '',
+        cookiePolicyUrl: document.getElementById('gdprCookieUrl')?.value || '',
+
+        // Баннер согласия
+        consentBanner: {
+            ...(existingGdpr.consentBanner || {}),
+            enabled: document.getElementById('gdprBannerEnabled')?.checked !== false,
+            blockChat: document.getElementById('gdprBannerBlock')?.checked !== false,
+            position: document.getElementById('gdprBannerPosition')?.value || 'bottom',
+            expireDays: parseInt(document.getElementById('gdprExpireDays')?.value) || 365,
+            showDeclineButton: document.getElementById('gdprShowDecline')?.checked !== false,
+            showPrivacyLink: document.getElementById('gdprShowPrivacyLink')?.checked !== false
+        },
+
+        // Pre-Chat форма
+        preChatForm: {
+            ...(existingGdpr.preChatForm || {}),
+            enabled: document.getElementById('gdprPreChatEnabled')?.checked || false,
+            showAfterConsent: document.getElementById('gdprPreChatAfterConsent')?.checked !== false,
+            gdprCheckbox: {
+                ...(existingGdpr.preChatForm?.gdprCheckbox || {}),
+                enabled: document.getElementById('gdprPreChatGdprCheckbox')?.checked !== false
+            }
+        },
+
+        // AI Disclosure
+        aiDisclosure: {
+            ...(existingGdpr.aiDisclosure || {}),
+            enabled: document.getElementById('gdprAIEnabled')?.checked !== false,
+            showBadge: document.getElementById('gdprAIBadge')?.checked !== false,
+            showInWelcome: document.getElementById('gdprAIWelcome')?.checked !== false
+        },
+
+        // Privacy Controls
+        privacyControls: {
+            ...(existingGdpr.privacyControls || {}),
+            enabled: document.getElementById('gdprPrivacyEnabled')?.checked !== false,
+            showInHeader: document.getElementById('gdprPrivacyInHeader')?.checked !== false,
+            options: {
+                ...(existingGdpr.privacyControls?.options || {}),
+                viewData: document.getElementById('gdprOptViewData')?.checked !== false,
+                exportData: document.getElementById('gdprOptExportData')?.checked !== false,
+                deleteHistory: document.getElementById('gdprOptDeleteHistory')?.checked !== false,
+                revokeConsent: document.getElementById('gdprOptRevokeConsent')?.checked !== false,
+                deleteAllData: document.getElementById('gdprOptDeleteAll')?.checked !== false
+            }
+        },
+
+        // Webhooks
+        webhooks: {
+            ...(existingGdpr.webhooks || {}),
+            consent: document.getElementById('gdprWebhookConsent')?.value || '',
+            preChatForm: document.getElementById('gdprWebhookPreChat')?.value || '',
+            dataAccess: document.getElementById('gdprWebhookDataAccess')?.value || '',
+            dataExport: document.getElementById('gdprWebhookDataExport')?.value || '',
+            dataDelete: document.getElementById('gdprWebhookDataDelete')?.value || ''
+        },
+
+        // Security Indicators
+        securityIndicators: {
+            ...(existingGdpr.securityIndicators || {}),
+            showSecureBadge: document.getElementById('gdprSecureBadge')?.checked !== false
+        },
+
+        // Advanced
+        advanced: {
+            ...(existingGdpr.advanced || {}),
+            httpsOnly: document.getElementById('gdprHttpsOnly')?.checked || false
+        },
+
+        // Chat History
+        chatHistory: {
+            ...(existingGdpr.chatHistory || {}),
+            encryptLocal: document.getElementById('gdprEncryptLocal')?.checked || false
+        },
+
+        // Data Minimization
+        dataMinimization: {
+            ...(existingGdpr.dataMinimization || {}),
+            collectIP: document.getElementById('gdprCollectIP')?.checked || false
+        }
+    };
+
+    console.log('📦 GDPR настройки для сохранения:', gdprSettings);
+
+    // Обновляем глобальные настройки
+    const updatedGlobalSettings = {
+        ...existingGlobalSettings,
+        gdpr: gdprSettings
+    };
+
+    // Показываем индикатор сохранения
+    showSaveIndicator('saving', t('gdpr.saving'));
+
+    // Отправляем на сервер
+    fetch('save-webchat-config.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            type: 'global',
+            globalSettings: updatedGlobalSettings
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSaveIndicator('success', t('gdpr.saved'));
+            isDirty = false;
+
+            // Обновляем в памяти
+            window.GlobalConfigSettings = updatedGlobalSettings;
+
+            console.log('✅ GDPR настройки успешно сохранены');
+        } else {
+            showSaveIndicator('error', data.error || t('gdpr.save_error'));
+            console.error('❌ Ошибка сохранения GDPR:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Ошибка сети:', error);
+        showSaveIndicator('error', t('save.server_error'));
+    });
+}
+
 // Загрузка GDPR настроек в форму
 function loadGDPRSettings() {
     const gdpr = window.GlobalConfigSettings?.gdpr || {};
@@ -9214,21 +9381,31 @@ function showSaveIndicator(type, message) {
         console.warn('⚠️ Элемент saveIndicator не найден');
         return;
     }
-    
+
     indicator.className = `save-indicator ${type} show`;
-    
+
     if (type === 'saving') {
-        indicator.innerHTML = '<span class="spinner"></span><span>Сохранение...</span>';
+        indicator.innerHTML = `<span class="spinner"></span><span>${message || 'Сохранение...'}</span>`;
     } else if (type === 'success') {
         indicator.innerHTML = `<span>✅</span><span>${message || 'Сохранено!'}</span>`;
     } else if (type === 'error') {
         indicator.innerHTML = `<span>❌</span><span>${message || 'Ошибка!'}</span>`;
+    } else if (type === 'changed') {
+        indicator.innerHTML = `<span>⚠️</span><span>${message || 'Есть несохраненные изменения'}</span>`;
     }
-    
-    if (type !== 'saving') {
+
+    // Автоматически скрываем через 3 секунды для всех типов кроме 'saving' и 'changed'
+    if (type !== 'saving' && type !== 'changed') {
         setTimeout(() => {
             indicator.classList.remove('show');
         }, 3000);
+    }
+
+    // Для 'changed' скрываем через 5 секунд
+    if (type === 'changed') {
+        setTimeout(() => {
+            indicator.classList.remove('show');
+        }, 5000);
     }
 }
 
