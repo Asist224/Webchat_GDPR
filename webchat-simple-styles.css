@@ -1,0 +1,3583 @@
+/* webchat-simple-styles.css - Стили с гибкой системой выбора темы */
+
+/* ==============================================
+   ОСНОВНЫЕ НАСТРОЙКИ РАСПОЛОЖЕНИЯ И РАЗМЕРА
+   ============================================== */
+.webchat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 420px;
+    height: 560px;
+    background: rgba(255, 255, 255, 0.95); /* ✨ Полупрозрачный фон */
+    backdrop-filter: blur(20px);        /* ✨ Эффект матового стекла */
+    -webkit-backdrop-filter: blur(20px); /* ✨ Для Safari */
+    border-radius: 16px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.12),
+        0 0 1px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5); /* ✨ Многослойная тень */
+    display: flex;
+    flex-direction: column;
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* ✨ Плавные переходы для всех свойств */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* ✨ Светлая граница */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* ✅ ИСПРАВЛЕНИЕ: Класс для отключения transitions при переключении конфигураций */
+.webchat-widget.webchat-no-transition {
+    transition: none !important;
+}
+
+/* ✨ НОВОЕ: Анимированный фон с частицами (эффект нейронной сети) */
+.webchat-widget::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(96, 165, 250, 0.03) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    animation: webchat-particles-float 20s ease-in-out infinite;
+}
+
+/* ✅ ИСПРАВЛЕНИЕ: Скрываем подложку когда чат свернут или в компактном режиме */
+.webchat-widget.webchat-minimized::before,
+.webchat-widget.webchat-compact::before {
+    display: none !important;
+}
+
+/* ✅ НОВОЕ: Убираем backdrop-filter и полупрозрачность у свернутого виджета */
+.webchat-widget.webchat-minimized,
+.webchat-widget.webchat-compact {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 1) !important; /* Делаем фон непрозрачным */
+}
+
+/* ✅ Для темной темы делаем темный непрозрачный фон */
+.webchat-widget.webchat-theme-dark.webchat-minimized,
+.webchat-widget.webchat-theme-dark.webchat-compact {
+    background: rgba(30, 30, 30, 1) !important;
+}
+
+/* ✨ НОВОЕ: Hover эффект для виджета (свечение при наведении) 
+.webchat-widget:hover {
+    box-shadow: 
+        0 25px 80px rgba(102, 126, 234, 0.15),
+        0 0 1px rgba(102, 126, 234, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+}*/
+/* ==============================================
+   НАСТРОЙКИ ШАПКИ ЧАТА
+   ============================================== */
+.webchat-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 🎨 ЦВЕТ ШАПКИ (градиент) */
+    color: white;                       /* Цвет текста в шапке */
+    padding: 17px;                      /* 📦 ОТСТУПЫ ВНУТРИ ШАПКИ */
+    border-radius: 16px 16px 0 0;       /* Скругление только верхних углов */
+    display: flex;
+    align-items: center;
+    gap: 12px;                          /* Расстояние между элементами */
+    margin: 0;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.webchat-header-info {
+    flex: 1;
+    margin: 0;
+    padding: 0;
+}
+
+.webchat-header-title {
+    font-size: 18px;                    /* 📝 РАЗМЕР ЗАГОЛОВКА */
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    padding: 0;
+    line-height: 1.2;
+}
+
+.webchat-header-subtitle {
+    font-size: 13px;                    /* 📝 РАЗМЕР ПОДЗАГОЛОВКА */
+    opacity: 0.9;
+    margin: 0;
+    padding: 0;
+    line-height: 1.2;
+}
+
+/* ==============================================
+   ИНДИКАТОР СТАТУСА (зеленая/желтая/красная точка)
+   ============================================== */
+.webchat-status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: webchat-pulse 2s infinite;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.webchat-status-indicator.webchat-connecting {
+    background: #f59e0b;
+}
+
+.webchat-status-indicator.webchat-error {
+    background: #ef4444;
+}
+
+/* ==============================================
+   ОБЛАСТЬ СООБЩЕНИЙ
+   ============================================== */
+.webchat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f8fafc;
+    margin: 0;
+    border: none;
+    box-sizing: border-box;
+}
+
+/* ==============================================
+   СТИЛИ ОТДЕЛЬНЫХ СООБЩЕНИЙ
+   ============================================== */
+.webchat-message {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    animation: webchat-messageSlideIn 0.4s ease-out;
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+    border: none;
+    box-sizing: border-box;
+}
+
+.webchat-message.webchat-user {
+    flex-direction: row-reverse;
+}
+
+.webchat-message-content {
+    max-width: 75%;
+    padding: 14px 18px;
+    border-radius: 18px;
+    position: relative;
+    word-wrap: break-word;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+    border: 1px solid transparent;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.webchat-message.webchat-bot .webchat-message-content {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-bottom-left-radius: 6px;
+    color: #374151;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.webchat-message.webchat-user .webchat-message-content {
+    /* ❌ УБРАН background - будет из JS конфига */
+    color: white;
+    border-bottom-right-radius: 6px;
+    border: 1px solid transparent;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+/* ==============================================
+   АВАТАРЫ (иконки рядом с сообщениями)
+   ============================================== */
+.webchat-message-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.webchat-bot-avatar {
+    /* ❌ УБРАН background - будет из JS конфига */
+    color: white;
+    box-shadow: 
+        0 0 20px rgba(102, 126, 234, 0.6),
+        0 0 40px rgba(102, 126, 234, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2); /* ✨ Многослойное свечение */
+    animation: webchat-ai-pulse 2s ease-in-out infinite; /* ✨ Пульсация */
+    position: relative;
+    z-index: 1;
+}
+
+
+.webchat-user-avatar {
+    background: #9ca3af;
+    color: white;
+    box-shadow: 0 2px 8px rgba(156, 163, 175, 0.3);
+}
+
+/* ==============================================
+   ИНДИКАТОР ПЕЧАТАНИЯ (AI-спиннер как в ChatGPT)
+   ============================================== */
+.webchat-typing-indicator {
+    display: none;
+    padding: 14px 20px;
+    color: #6b7280;
+    font-style: italic;
+    font-size: 13px;
+    margin: 0;
+    border: none;
+    background: transparent;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    align-items: center;
+    gap: 8px;
+}
+
+.webchat-typing-indicator.webchat-show {
+    display: flex;
+    animation: webchat-fadeIn 0.3s ease;
+}
+
+/* Контейнер для спиннера */
+.webchat-typing-dots {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+}
+
+/* ✨ НОВОЕ: Крутящийся AI-спиннер (как в ChatGPT/Claude) */
+.webchat-typing-dot {
+    width: 16px;                        /* ✨ Размер спиннера */
+    height: 16px;                       /* ✨ Размер спиннера */
+    border: 2.5px solid transparent;    /* ✨ Прозрачная основа */
+    border-top-color: #667eea;          /* ✨ Цветная часть (градиент начало) */
+    border-right-color: #764ba2;        /* ✨ Цветная часть (градиент конец) */
+    border-radius: 50%;                 /* ✨ Круглая форма */
+    display: inline-block;
+    animation: webchat-ai-spinner 0.8s linear infinite; /* ✨ Плавное вращение */
+}
+
+/* ✨ Скрываем 2-ю и 3-ю точки (нужен только один спиннер) */
+.webchat-typing-dot:nth-child(2),
+.webchat-typing-dot:nth-child(3) {
+    display: none;
+}
+
+/* ==============================================
+   АНИМАЦИИ
+   ============================================== */
+
+/* ✨ НОВОЕ: Плавающие частицы в фоне */
+@keyframes webchat-particles-float {
+    0%, 100% { 
+        transform: translate(0, 0) scale(1);
+        opacity: 0.5;
+    }
+    33% { 
+        transform: translate(10px, -10px) scale(1.1);
+        opacity: 0.7;
+    }
+    66% { 
+        transform: translate(-10px, 10px) scale(0.9);
+        opacity: 0.6;
+    }
+}
+
+/* ✨ НОВОЕ: Вращение AI-спиннера (как в ChatGPT/Claude) */
+@keyframes webchat-ai-spinner {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Плавное появление индикатора */
+@keyframes webchat-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Пульсация статус-индикатора */
+@keyframes webchat-pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+/* ✨ НОВОЕ: Пульсация AI-аватара */
+@keyframes webchat-ai-pulse {
+    0%, 100% { 
+        transform: scale(1);
+    }
+    50% { 
+        transform: scale(1.05);
+    }
+}
+
+/* ✨ НОВОЕ: Свечение вокруг аватара */
+@keyframes webchat-avatar-glow {
+    0%, 100% { 
+        opacity: 0.2; /* ✅ УМЕНЬШЕНО */
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.35; /* ✅ УМЕНЬШЕНО */
+        transform: scale(1.1);
+    }
+}
+
+
+/* Анимация появления сообщений */
+@keyframes webchat-messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 🎬 Анимация для streaming текста (плавное появление) */
+@keyframes webchat-streamingFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(4px) scale(0.99);
+    }
+    60% {
+        opacity: 0.9;
+        transform: translateY(-1px) scale(1.005);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 🎬 СТИЛЬ ДЛЯ АНИМИРОВАННЫХ ЧАСТЕЙ ТЕКСТА */
+.webchat-streaming-chunk {
+    display: inline;
+    animation: webchat-streamingFadeIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation-fill-mode: both;
+}
+
+/* ==============================================
+   ОБЛАСТЬ ВВОДА СООБЩЕНИЙ (нижняя часть)
+   ============================================== */
+.webchat-input-area {
+    padding: 8px 20px 1px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: white;
+    border-radius: 0 0 16px 16px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+/* Восстановление стандартного отступа, когда брендирование выключено */
+.webchat-widget.webchat-hide-branding .webchat-input-area {
+    padding-bottom: 20px;
+}
+
+/* ==============================================
+   БЫСТРЫЕ КНОПКИ
+   ============================================== */
+.webchat-quick-actions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    padding: 0 2px;
+}
+
+.webchat-quick-actions-title {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+    margin: 0;
+    padding: 0;
+}
+
+.webchat-quick-toggle-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    margin: 0;
+    outline: none;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.webchat-quick-toggle-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.webchat-quick-actions.webchat-quick-collapsed .webchat-quick-buttons {
+    display: none;
+}
+
+.webchat-quick-actions.webchat-quick-collapsed {
+    margin-bottom: 6px;
+}
+
+.webchat-quick-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    transition: all 0.3s ease;
+    margin-top: 0px;
+    padding-top: 0;
+    margin-bottom: 0px;
+}
+
+.webchat-quick-actions {
+    margin-bottom: 12px;
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+    border: none;
+    box-sizing: border-box;
+}
+
+.webchat-quick-btn {
+    padding: 8px 16px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    margin: 0;
+    color: #374151;
+    text-decoration: none;
+    outline: none;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    line-height: normal;
+    min-height: auto;
+    height: auto;
+    font-weight: 500;
+}
+
+.webchat-quick-btn:hover {
+    /* ❌ УБРАН background - будет из JS конфига */
+    color: white;
+    /* ❌ УБРАН border-color - будет из JS конфига */
+    transform: translateY(-2px) scale(1.02); /* ✨ Больше подъем */
+    box-shadow: 
+        0 6px 20px rgba(102, 126, 234, 0.3),
+        0 0 0 3px rgba(102, 126, 234, 0.1); /* ✨ Сильнее тень */
+}
+
+.webchat-quick-btn:focus,
+.webchat-quick-btn:active {
+    /* ❌ УБРАНЫ цвета - будут из JS конфига */
+    color: white;
+    outline: none;
+}
+
+/* ==============================================
+   ПОЛЕ ВВОДА ТЕКСТА
+   ============================================== */
+.webchat-input-controls {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-sizing: border-box;
+}
+
+.webchat-message-input {
+    flex: 1;
+    padding: 14px 18px;
+    border: 2px solid #e5e7eb;
+    border-radius: 24px;
+    outline: none;
+    font-size: 14px;
+    resize: none;
+    max-height: 120px;
+    min-height: 52px;
+    height: auto;
+    transition: all 0.2s ease;
+    margin: 0;
+    background: white;
+    color: #374151;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    line-height: 1.4;
+    width: auto;
+}
+
+.webchat-message-input::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+}
+
+.webchat-message-input:focus {
+    border-color: #667eea;
+    box-shadow: 
+        0 0 0 4px rgba(102, 126, 234, 0.15),
+        0 4px 20px rgba(102, 126, 234, 0.2); /* ✨ Сильнее свечение */
+    transform: translateY(-1px); /* ✨ Подъем при фокусе */
+}
+
+/* ==============================================
+   КНОПКИ УПРАВЛЕНИЯ (отправка, запись голоса)
+   ============================================== */
+.webchat-control-btn {
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 50%;
+    /* ❌ УБРАН background - будет из JS конфига */
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 18px;
+    margin: 0;
+    padding: 0;
+    outline: none;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    min-width: 48px;
+    flex-shrink: 0;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.webchat-control-btn:hover {
+    /* ❌ УБРАН background - будет из JS конфига */
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.webchat-control-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 2px 8px rgba(156, 163, 175, 0.2);
+}
+
+/* ✨ НОВОЕ: Эффект нажатия кнопки отправки */
+.webchat-control-btn.sending {
+    animation: webchat-button-press 0.2s ease;
+}
+
+@keyframes webchat-button-press {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.9);
+    }
+}
+
+/* ==============================================
+   КНОПКА ОТПРАВКИ ФАЙЛОВ
+   ============================================== */
+.webchat-file-btn {
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 50%;
+    /* ❌ УБРАН background - будет из JS конфига */
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 18px;
+    margin: 0;
+    padding: 0;
+    outline: none;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    min-width: 48px;
+    flex-shrink: 0;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.webchat-file-btn:hover {
+    /* ❌ УБРАН background - будет из JS конфига */
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.webchat-file-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 2px 8px rgba(156, 163, 175, 0.2);
+}
+
+/* ==============================================
+   СКРЫТОЕ ПОЛЕ ДЛЯ ВЫБОРА ФАЙЛОВ
+   ============================================== */
+.webchat-file-input {
+    display: none !important;
+}
+
+/* ==============================================
+   ПРЕДВАРИТЕЛЬНЫЙ ПРОСМОТР ФАЙЛОВ
+   ============================================== */
+.webchat-file-preview {
+    display: none;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+}
+
+.webchat-file-preview.show {
+    display: block;
+}
+
+.webchat-file-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.webchat-file-preview-close {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    margin: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.webchat-file-preview-close:hover {
+    background: #fee2e2;
+}
+
+.webchat-file-preview-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.webchat-file-preview-image {
+    max-width: 60px;
+    max-height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #e5e7eb;
+}
+
+.webchat-file-preview-icon {
+    width: 60px;
+    height: 60px;
+    /* ❌ УБРАН background - будет из JS конфига */
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.webchat-file-preview-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.webchat-file-preview-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin: 0 0 4px 0;
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+.webchat-file-preview-size {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* ==============================================
+   СООБЩЕНИЯ С ФАЙЛАМИ
+   ============================================== */
+.webchat-message-file {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 12px;
+    margin: 8px 0;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.webchat-message-file-icon {
+    width: 48px;
+    height: 48px;
+    background: #667eea;
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.webchat-message-file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.webchat-message-file-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin: 0 0 4px 0;
+    word-break: break-word;
+}
+
+.webchat-message-file-size {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.webchat-message-image {
+    max-width: 250px;
+    max-height: 200px;
+    border-radius: 12px;
+    margin: 8px 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    border: 1px solid #e5e7eb;
+}
+
+.webchat-message-image:hover {
+    transform: scale(1.02);
+}
+
+/* ==============================================
+   ИНДИКАТОР ЗАГРУЗКИ ФАЙЛА
+   ============================================== */
+.webchat-file-uploading {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.webchat-file-uploading.show {
+    display: flex;
+}
+
+.webchat-file-uploading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #667eea;
+    border-radius: 50%;
+    animation: webchat-spin 1s linear infinite;
+}
+
+@keyframes webchat-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ==============================================
+   ТЕМНАЯ ТЕМА ДЛЯ ФАЙЛОВ
+   ============================================== */
+.webchat-widget.webchat-theme-dark .webchat-file-preview {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-file-preview-header {
+    color: #9ca3af !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-file-preview-name {
+    color: #f9fafb !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-file-preview-size {
+    color: #9ca3af !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message-file {
+    background: rgba(102, 126, 234, 0.2) !important;
+    border-color: rgba(102, 126, 234, 0.3) !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message-file-name {
+    color: #f9fafb !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message-file-size {
+    color: #9ca3af !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-file-uploading {
+    background: #4b5563 !important;
+    color: #9ca3af !important;
+}
+
+/* ==============================================
+   АВТОМАТИЧЕСКАЯ ТЕМА ДЛЯ ФАЙЛОВ (МОБИЛЬНАЯ)
+   ============================================== */
+@media (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto .webchat-file-preview {
+        background: #374151 !important;
+        border-color: #4b5563 !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-file-preview-header {
+        color: #9ca3af !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-file-preview-name {
+        color: #f9fafb !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-file-preview-size {
+        color: #9ca3af !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-message-file {
+        background: rgba(102, 126, 234, 0.2) !important;
+        border-color: rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-message-file-name {
+        color: #f9fafb !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-message-file-size {
+        color: #9ca3af !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-file-uploading {
+        background: #4b5563 !important;
+        color: #9ca3af !important;
+    }
+}
+
+/* ==============================================
+   КНОПКА СВОРАЧИВАНИЯ ЧАТА
+   ============================================== */
+.webchat-minimize-btn {
+    background: rgba(255,255,255,0.2);  /* 🎨 ФОН КНОПКИ СВОРАЧИВАНИЯ */
+    border: none;
+    color: white;
+    width: 32px;                        /* 📏 РАЗМЕР КНОПКИ СВОРАЧИВАНИЯ */
+    height: 32px;                       /* 📏 РАЗМЕР КНОПКИ СВОРАЧИВАНИЯ */
+    border-radius: 8px;                 /* Скругление */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0;
+    padding: 0;
+    outline: none;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.webchat-minimize-btn:hover {
+    background: rgba(255,255,255,0.3);  /* Цвет при наведении */
+    transform: scale(1.1);              /* Увеличение при наведении */
+}
+
+/* ==============================================
+   СОСТОЯНИЕ СВЕРНУТОГО ЧАТА
+   ============================================== */
+.webchat-widget.webchat-minimized {
+    height: auto !important;           /* Автоматическая высота */
+    /* ✅ ДОБАВЬТЕ ПОЗИЦИОНИРОВАНИЕ ДЛЯ ДЕСКТОПА */
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    top: auto !important;              /* Важно: сбрасываем top */
+    left: auto !important;             /* Важно: сбрасываем left */
+}
+
+.webchat-widget.webchat-minimized .webchat-messages,
+.webchat-widget.webchat-minimized .webchat-input-area {
+    display: none !important;          /* Скрываем сообщения и ввод */
+}
+
+/* ✅ ДОБАВЬТЕ СТИЛИ ДЛЯ КОМПАКТНОГО РЕЖИМА НА ДЕСКТОПЕ */
+.webchat-widget.webchat-minimized.webchat-compact {
+    width: 180px !important;
+    height: 60px !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    top: auto !important;
+    left: auto !important;
+}
+
+/* ==============================================
+   КНОПКА ОТКРЫТИЯ В ОТДЕЛЬНОМ ОКНЕ
+   ============================================== */
+.webchat-popout-btn {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 0 !important;
+    height: 0 !important;
+    border-style: solid;
+    border-width: 35px 35px 0 0;
+    border-color: rgba(255,255,255,0.2) transparent transparent transparent;
+    background: none !important;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    margin: 0;
+    padding: 0;
+    outline: none;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    z-index: 1000004;
+}
+
+/* Белый треугольник внутри */
+.webchat-popout-btn::before {
+    content: "";
+    position: absolute;
+    top: -27px;
+    left: 8px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 0 12px 12px;
+    border-color: transparent transparent rgba(255, 255, 255, 0.7) transparent;
+    transform: rotate(179deg);
+}
+
+.webchat-popout-btn:hover {
+    border-color: rgba(255,255,255,0.3) transparent transparent transparent;
+    transform: scale(1.1); /* Увеличиваем на 10% */
+}
+
+/* ПОКАЗЫВАЕМ кнопку ТОЛЬКО в развернутом состоянии */
+.webchat-widget.webchat-minimized .webchat-popout-btn {
+    display: none !important;
+}
+
+/* Скрываем кнопку на мобильных устройствах */
+@media (max-width: 480px) {
+    .webchat-popout-btn {
+        display: none !important;
+    }
+}
+
+/* Скрываем в компактном режиме */
+.webchat-widget.webchat-minimized.webchat-compact .webchat-popout-btn {
+    display: none !important;
+}
+
+/* Темная тема для кнопки popout */
+.webchat-widget.webchat-theme-dark .webchat-popout-btn {
+    border-color: rgba(255,255,255,0.15) transparent transparent transparent;
+}
+
+/* Автоматическая тема для кнопки popout */
+@media (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto .webchat-popout-btn {
+        border-color: rgba(255,255,255,0.15) transparent transparent transparent;
+    }
+}
+
+/* ==============================================
+   АНИМАЦИЯ ЗАПИСИ ГОЛОСА
+   ============================================== */
+.webchat-recording {
+    animation: webchat-recording-pulse 1s infinite; /* Пульсация при записи */
+}
+
+@keyframes webchat-recording-pulse {
+    0%, 100% { 
+        background: #ef4444;             /* Красный цвет */
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+    }
+    50% { 
+        background: #dc2626;             /* Более темный красный */
+        box-shadow: 0 0 25px rgba(239, 68, 68, 0.8);
+    }
+}
+/* ==============================================
+   КОМПАКТНЫЕ ГОЛОСОВЫЕ СООБЩЕНИЯ - ТОЛЬКО ПЛЕЕР
+   ============================================== */
+
+/* ✅ МАКСИМАЛЬНО СПЕЦИФИЧНЫЕ СЕЛЕКТОРЫ ДЛЯ УБИРАНИЯ ФОНА */
+.webchat-widget .webchat-message.webchat-bot.webchat-voice-message {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.webchat-widget .webchat-message.webchat-bot.webchat-voice-message .webchat-message-content {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+}
+
+/* ✅ ДЛЯ ВСЕХ ТЕМ - МАКСИМАЛЬНАЯ СПЕЦИФИЧНОСТЬ */
+.webchat-widget.webchat-theme-dark .webchat-message.webchat-bot.webchat-voice-message,
+.webchat-widget.webchat-theme-light .webchat-message.webchat-bot.webchat-voice-message,
+.webchat-widget.webchat-theme-auto .webchat-message.webchat-bot.webchat-voice-message {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message.webchat-bot.webchat-voice-message .webchat-message-content,
+.webchat-widget.webchat-theme-light .webchat-message.webchat-bot.webchat-voice-message .webchat-message-content,
+.webchat-widget.webchat-theme-auto .webchat-message.webchat-bot.webchat-voice-message .webchat-message-content {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: inherit !important;
+}
+
+/* ✅ ДОПОЛНИТЕЛЬНО ДЛЯ АВТОТЕМЫ В ТЕМНОМ РЕЖИМЕ */
+@media (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto .webchat-message.webchat-bot.webchat-voice-message {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-message.webchat-bot.webchat-voice-message .webchat-message-content {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+
+.webchat-audio-message {
+    width: 100%;
+    margin: 10px 0;
+    padding: 12px 16px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 18px;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+    position: relative;
+    min-height: 60px;
+}
+
+.webchat-audio-message:hover {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+/* ✅ СКРЫВАЕМ СТАНДАРТНЫЙ AUDIO ПЛЕЕР */
+.webchat-audio-message audio {
+    display: none !important;
+}
+
+/* ✅ КНОПКА ВОСПРОИЗВЕДЕНИЯ В СТИЛЕ TELEGRAM (без изменений) */
+.webchat-voice-play-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #667eea;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.webchat-voice-play-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.webchat-voice-play-btn.playing {
+    background: #ef4444;
+    animation: webchat-voice-pulse 1.5s infinite;
+}
+
+.webchat-voice-play-btn.loading {
+    background: #f59e0b;
+}
+
+/* ✅ ИКОНКИ PLAY/PAUSE (без изменений) */
+.webchat-voice-play-btn .play-icon {
+    display: block;
+}
+
+.webchat-voice-play-btn .pause-icon {
+    display: none;
+}
+
+.webchat-voice-play-btn.playing .play-icon {
+    display: none;
+}
+
+.webchat-voice-play-btn.playing .pause-icon {
+    display: block;
+}
+
+/* ✅ КОНТЕЙНЕР ДЛЯ ВОЛН И ВРЕМЕНИ (без изменений) */
+.webchat-voice-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+/* ✅ ВОЛНОВАЯ АНИМАЦИЯ (без изменений) */
+.webchat-voice-waveform {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 24px;
+    padding: 2px 0;
+}
+
+.webchat-voice-wave {
+    width: 3px;
+    background: #667eea;
+    border-radius: 2px;
+    transition: all 0.1s ease;
+    opacity: 0.3;
+}
+
+.webchat-voice-wave.active {
+    opacity: 1;
+    background: #5a67d8;
+}
+
+/* ✅ ВРЕМЯ И РАЗМЕР (без изменений) */
+.webchat-voice-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.webchat-voice-time {
+    font-weight: 500;
+    color: #374151;
+}
+
+.webchat-voice-size {
+    opacity: 0.7;
+}
+
+/* ✅ ПРОГРЕСС БАР (без изменений) */
+.webchat-voice-progress {
+    width: 100%;
+    height: 3px;
+    background: rgba(102, 126, 234, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 4px 0;
+}
+
+.webchat-voice-progress-bar {
+    height: 100%;
+    background: #667eea;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.1s ease;
+}
+
+/* ✅ АНИМАЦИИ (без изменений) */
+@keyframes webchat-voice-pulse {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+    50% { 
+        transform: scale(1.1);
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.5);
+    }
+}
+
+@keyframes webchat-voice-wave {
+    0%, 100% { height: 8px; }
+    50% { height: 20px; }
+}
+
+.webchat-voice-wave.animating {
+    animation: webchat-voice-wave 0.8s ease-in-out infinite;
+}
+
+/* ✅ ТЕМНАЯ ТЕМА - ВОЗВРАЩАЕМ фон плеера */
+.webchat-widget.webchat-theme-dark .webchat-audio-message {
+    background: rgba(102, 126, 234, 0.2); /* ✅ ВОЗВРАЩАЕМ фон плеера в темной теме */
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.webchat-widget.webchat-theme-dark .webchat-voice-info {
+    color: #9ca3af;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-voice-time {
+    color: #f9fafb;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-voice-wave {
+    background: #60a5fa;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-voice-wave.active {
+    background: #3b82f6;
+}
+
+/* ✅ АВТОМАТИЧЕСКАЯ ТЕМА - ВОЗВРАЩАЕМ фон плеера */
+@media (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto .webchat-audio-message {
+        background: rgba(102, 126, 234, 0.2); /* ✅ ВОЗВРАЩАЕМ фон плеера в автотеме */
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-voice-info {
+        color: #9ca3af;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-voice-time {
+        color: #f9fafb;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-voice-wave {
+        background: #60a5fa;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-voice-wave.active {
+        background: #3b82f6;
+    }
+}
+
+/* ✅ МОБИЛЬНЫЕ СТИЛИ - ВОЗВРАЩАЕМ отступы плеера */
+@media (max-width: 480px) {
+    .webchat-audio-message {
+        padding: 10px 12px; /* ✅ ВОЗВРАЩАЕМ отступы на мобильных */
+        gap: 10px;
+        min-height: 56px; /* ✅ ВОЗВРАЩАЕМ нормальную высоту на мобильных */
+    }
+    
+    .webchat-voice-play-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    .webchat-voice-info {
+        font-size: 11px;
+    }
+}
+
+/* ==============================================
+   СООБЩЕНИЯ ОБ ОШИБКАХ
+   ============================================== */
+.webchat-error-message {
+    background: #fef2f2;                /* 🎨 ФОН ОШИБОК (светло-красный) */
+    color: #dc2626;                     /* 🎨 ЦВЕТ ТЕКСТА ОШИБОК (красный) */
+    border: 1px solid #fecaca;          /* Граница */
+    padding: 12px 16px;                 /* Отступы */
+    border-radius: 12px;                /* Скругление */
+    font-size: 13px;                    /* Размер шрифта */
+    margin: 10px 0;                     /* Отступы сверху и снизу */
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* ==============================================
+   ИНДИКАТОР ЗАГРУЗКИ (точки) - БЕЗ !important!
+   ============================================== */
+.webchat-loading-dots {
+    display: inline-block;
+}
+
+.webchat-loading-dots::after {
+    content: '';
+    animation: webchat-loading-dots 1.5s infinite; /* ✅ Без !important - работает! */
+}
+
+@keyframes webchat-loading-dots {
+    0%, 20% { content: '.'; }           /* ✅ Без !important */
+    40% { content: '..'; }              /* ✅ Без !important */
+    60%, 100% { content: '...'; }       /* ✅ Без !important */
+}
+
+/* ==============================================
+   ПОЛНЫЙ МОБИЛЬНЫЙ БЛОК (ИСПРАВЛЕННЫЙ)
+   ============================================== */
+@media (max-width: 480px) {
+    
+    /* ⭐ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Полноэкранные стили ТОЛЬКО для развернутого чата */
+    .webchat-widget:not(.webchat-minimized) {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: var(--viewport-height, 100vh) !important;
+        max-width: none !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        z-index: 999999 !important;
+        overflow: visible !important;
+        /* ⭐ УБИРАЕМ ФОН КОНТЕЙНЕРА ЧАТА НА МОБИЛЬНЫХ */
+        background: transparent !important;
+        /* ⭐ ПРОСТАЯ АНИМАЦИЯ БЕЗ ПРОМЕЖУТОЧНЫХ СОСТОЯНИЙ */
+        transition: opacity 0.3s ease-in-out !important;
+        transform-origin: bottom right !important;
+    }
+    
+    /* ✅ СВЕРНУТОЕ СОСТОЯНИЕ - общие стили для всех режимов */
+    .webchat-widget.webchat-minimized {
+        position: fixed !important;
+        bottom: 10px !important;
+        left: 10px !important;
+        right: 10px !important;
+        top: auto !important;
+        width: calc(100vw - 20px) !important;
+        height: auto !important;
+        max-width: 360px !important;
+        border-radius: 16px !important;
+        margin: 0 auto !important;
+        overflow: visible !important;
+        z-index: 999999 !important;
+        /* ⭐ УБИРАЕМ ФОН КОНТЕЙНЕРА ЧАТА НА МОБИЛЬНЫХ */
+        background: transparent !important;
+        /* ⭐ ПРОСТАЯ АНИМАЦИЯ */
+        transition: all 0.3s ease-in-out !important;
+        transform-origin: bottom right !important;
+    }
+    
+    /* ✅ КОМПАКТНЫЙ РЕЖИМ - настраиваемая позиция */
+.webchat-widget.webchat-minimized.webchat-compact {
+    /* Размеры будут применяться через JavaScript */
+    position: fixed !important;
+    margin: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    /* ⭐ ПРОСТАЯ АНИМАЦИЯ */
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out !important;
+    transform-origin: bottom right !important;
+}
+    
+    /* ✅ ОСНОВНЫЕ ЭЛЕМЕНТЫ ИНТЕРФЕЙСА */
+    .webchat-message-content {
+        font-size: 14px !important;
+        max-width: 85% !important;
+    }
+    
+    .webchat-quick-buttons {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    
+    .webchat-quick-btn {
+        width: 100% !important;
+        text-align: center !important;
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+    }
+    
+    .webchat-header {
+        padding: 16px !important;
+    }
+    
+    .webchat-widget.webchat-minimized .webchat-header {
+        border-radius: 16px !important;
+        padding: 16px !important;
+    }
+    
+    .webchat-widget:not(.webchat-minimized) .webchat-header {
+        border-radius: 0 !important;
+    }
+    
+    .webchat-messages {
+        padding: 16px !important;
+        flex: 1 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .webchat-input-area {
+        padding: 8px !important;
+        border-radius: 0 !important;
+    }
+    
+    .webchat-message-input {
+        font-size: 16px !important;
+        height: auto;
+        max-height: 120px;
+        min-height: 65px;
+        box-sizing: border-box;
+        overflow-y: auto;  
+    }
+    
+    /* ✅ УЛУЧШЕННАЯ АДАПТАЦИЯ ПОЛЯ ВВОДА НА МОБИЛЬНЫХ */
+.webchat-widget .webchat-message-input {
+    transition: height 0.2s ease;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ✅ ОБЕСПЕЧИВАЕМ ПРАВИЛЬНОЕ ПОВЕДЕНИЕ КОНТЕЙНЕРА */
+.webchat-widget .webchat-input-controls {
+    align-items: flex-end;
+}
+    
+    .webchat-contacts-btn {
+        font-size: 11px !important;
+        padding: 4px 6px !important;
+        height: 24px !important;
+        min-width: 28px !important;
+    }
+    
+    .webchat-contacts-popup {
+        position: absolute !important;
+        top: 100% !important;
+        right: 0 !important;
+        left: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        min-width: 180px !important;
+        width: auto !important;
+        max-width: 250px !important;
+        margin-top: 8px !important;
+        z-index: 1000010 !important;
+        border-radius: 12px !important;
+        padding: 12px !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2) !important;
+        overflow: visible !important;
+        background: white !important;
+        border: 1px solid #e5e7eb !important;
+    }
+    
+    .webchat-widget.webchat-minimized .webchat-contacts-popup {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 120px !important;
+        right: 15px !important;
+        left: auto !important;
+        transform: none !important;
+        margin: 0 !important;
+        min-width: 180px !important;
+        max-width: 220px !important;
+        z-index: 1000025 !important;
+        overflow: visible !important;
+        background: white !important;
+        border: 1px solid #e5e7eb !important;
+    }
+    
+    .webchat-widget.webchat-minimized .webchat-contacts-popup.show {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 120px !important;
+        right: 15px !important;
+        left: auto !important;
+        transform: none !important;
+        margin: 0 !important;
+        z-index: 1000030 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        overflow: visible !important;
+        pointer-events: auto !important;
+        background: white !important;
+        border: 1px solid #e5e7eb !important;
+    }
+    
+    .webchat-contact-icon {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 16px !important;
+    }
+    
+    .webchat-contacts-grid {
+        gap: 6px !important;
+        padding: 6px 0 !important;
+    }
+    
+    .webchat-contacts-title {
+        font-size: 12px !important;
+        margin-bottom: 6px !important;
+        padding-bottom: 4px !important;
+        color: #374151 !important;
+        border-color: #e5e7eb !important;
+    }
+}
+/* ✅ ПОДДЕРЖКА ГОРИЗОНТАЛЬНОЙ ОРИЕНТАЦИИ НА МОБИЛЬНЫХ */
+@media (max-width: 480px) and (orientation: landscape) {
+    /* Развернутый чат в ландшафте */
+    .webchat-widget:not(.webchat-minimized) {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        max-height: none !important;
+        transform: none !important;
+        margin: 0 !important;
+    }
+    
+    /* Уменьшаем высоту элементов для ландшафта */
+    .webchat-header {
+        padding: 8px 16px !important;
+    }
+    
+    .webchat-messages {
+        padding: 8px 16px !important;
+    }
+    
+    .webchat-input-area {
+        padding: 8px 16px !important;
+    }
+    
+    .webchat-message-input {
+        min-height: 40px !important;
+        max-height: 80px !important;
+    }
+}
+/* =======================================================================
+   🌙 ТЕМНАЯ ТЕМА ДЛЯ МОБИЛЬНЫХ (без изменений)
+   ======================================================================= */
+@media (max-width: 480px) {
+    .webchat-widget.webchat-theme-dark .webchat-contacts-popup,
+    .webchat-widget.webchat-theme-dark .webchat-contacts-popup.show {
+        background: #374151 !important;
+        border-color: #4b5563 !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+    }
+    
+    .webchat-widget.webchat-theme-dark .webchat-contacts-title {
+        color: #f9fafb !important;
+        border-color: #4b5563 !important;
+    }
+    
+    .webchat-widget.webchat-theme-dark .webchat-contact-tooltip {
+        background: #1f2937 !important;
+        color: #f9fafb !important;
+    }
+}
+
+/* ✅ АВТОМАТИЧЕСКАЯ ТЕМА ДЛЯ МОБИЛЬНЫХ */
+@media (max-width: 480px) and (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto .webchat-contacts-popup,
+    .webchat-widget.webchat-theme-auto .webchat-contacts-popup.show {
+        background: #374151 !important;
+        border-color: #4b5563 !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-contacts-title {
+        color: #f9fafb !important;
+        border-color: #4b5563 !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-contact-tooltip {
+        background: #1f2937 !important;
+        color: #f9fafb !important;
+    }
+}
+
+/* ✅ АВТОМАТИЧЕСКАЯ ТЕМА ДЛЯ МОБИЛЬНЫХ */
+@media (max-width: 480px) and (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto .webchat-contacts-popup,
+    .webchat-widget.webchat-theme-auto .webchat-contacts-popup.show {
+        background: #374151 !important;
+        border-color: #4b5563 !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-contacts-title {
+        color: #f9fafb !important;
+        border-color: #4b5563 !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-contact-tooltip {
+        background: #1f2937 !important;
+        color: #f9fafb !important;
+    }
+}
+
+/* ✅ АДАПТИВНЫЙ РЕЖИМ ДЛЯ ДЕСКТОПА (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    
+    /* Полноэкранный режим при разворачивании */
+    .webchat-widget:not(.webchat-minimized) {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        z-index: 999999 !important;
+        background: transparent !important;
+    }
+    
+    /* Свернутое состояние - адаптивно */
+    .webchat-widget.webchat-minimized {
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        left: auto !important;
+        width: 360px !important;
+        max-width: calc(100vw - 40px) !important;
+        height: auto !important;
+        border-radius: 16px !important;
+        transition: all 0.3s ease-in-out !important;
+    }
+    
+    /* Компактный режим */
+    .webchat-widget.webchat-minimized.webchat-compact {
+        width: 180px !important;
+        height: 60px !important;
+        max-width: 180px !important;
+    }
+    
+    /* Убираем закругления в развернутом состоянии */
+    .webchat-widget:not(.webchat-minimized) .webchat-header {
+        border-radius: 0 !important;
+    }
+    
+    /* Адаптация размеров элементов */
+    .webchat-message-content {
+        font-size: 15px !important;
+        max-width: 80% !important;
+    }
+    
+    .webchat-message-input {
+        font-size: 16px !important;
+        min-height: 50px !important;
+        max-height: 150px !important;
+    }
+    
+    .webchat-quick-buttons {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    
+    .webchat-quick-btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        min-width: 120px !important;
+    }
+}
+
+/* ✅ РАСШИРЕННАЯ ПОДДЕРЖКА ПЛАНШЕТОВ В ЛАНДШАФТЕ */
+@media (max-width: 768px) and (orientation: landscape) {
+    .webchat-widget:not(.webchat-minimized) {
+        width: 100vw !important;
+        height: 100vh !important;
+    }
+}
+/* ==============================================
+   ПРОКРУТКА (скроллбар)
+   ============================================== */
+.webchat-messages::-webkit-scrollbar {
+    width: 6px;                         /* 📏 ШИРИНА ПОЛОСЫ ПРОКРУТКИ */
+}
+
+.webchat-messages::-webkit-scrollbar-track {
+    background: transparent;            /* Прозрачный фон дорожки */
+}
+
+.webchat-messages::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.3); /* 🎨 ЦВЕТ ПОЛЗУНКА ПРОКРУТКИ */
+    border-radius: 3px;                 /* Скругление ползунка */
+}
+
+.webchat-messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.5); /* Цвет при наведении */
+}
+
+/* ==============================================
+   АНИМАЦИИ
+   ============================================== */
+@keyframes webchat-pulse {
+    0%, 100% { 
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.7;
+        transform: scale(1.2);
+    }
+}
+
+@keyframes webchat-messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes webchat-fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ==============================================
+   ПЕРЕКЛЮЧАТЕЛЬ КОНФИГУРАЦИЙ
+   ============================================== */
+.webchat-config-switcher {
+    position: relative;
+    margin: 0 8px 0 0;
+    padding: 0;
+    border: none;
+    box-sizing: border-box;
+    z-index: 1000001;                   /* 🔝 ВЫСОКИЙ Z-INDEX для переключателя */
+}
+
+.webchat-config-select {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    color: white;
+    font-size: 12px;
+    padding: 6px 24px 6px 8px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-weight: 500;
+    line-height: 1.2;
+    min-width: 100px;
+    max-width: 120px;
+    height: 28px;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 12px;
+    z-index: 1000002;                   /* 🔝 ЕЩЕ ВЫШЕ Z-INDEX для самого селекта */
+    position: relative;                 /* Обеспечиваем работу z-index */
+}
+
+.webchat-config-select:hover {
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.webchat-config-select:focus {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.7);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+}
+
+/* 🔝 КРИТИЧЕСКИ ВАЖНО: Высокий z-index для выпадающего списка */
+.webchat-config-select option {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 8px 12px;
+    border: none;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    z-index: 1000003;                   /* 🔝 МАКСИМАЛЬНЫЙ Z-INDEX для опций */
+}
+
+.webchat-config-select option:hover,
+.webchat-config-select option:focus {
+    background: #4b5563;
+    color: #ffffff;
+}
+
+.webchat-config-select option:checked {
+    background: #667eea;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* ==============================================
+   🌍 ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКОВ
+   ============================================== */
+.webchat-language-switcher {
+    position: relative;
+    margin: 0 4px 0 0;
+    padding: 0;
+    border: none;
+    box-sizing: border-box;
+    z-index: 1000001;
+    display: flex;
+    gap: 2px;
+}
+
+/* ✅ НОВОЕ: Скрываем кнопки языков в свернутом состоянии */
+.webchat-widget.webchat-minimized .webchat-language-switcher {
+    display: none !important;
+}
+
+/* ✅ НОВОЕ: Скрываем кнопки языков в компактном режиме */
+.webchat-widget.webchat-minimized.webchat-compact .webchat-language-switcher {
+    display: none !important;
+}
+.webchat-language-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    color: white;
+    font-size: 12px;
+    padding: 4px 6px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-weight: 500;
+    line-height: 1;
+    height: 24px;
+    min-width: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1000003;
+}
+
+.webchat-language-btn:hover {
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.webchat-language-btn.active {
+    background: rgba(255,255,255,0.9);
+    color: #667eea;
+    border-color: rgba(255,255,255,0.9);
+    font-weight: 600;
+}
+
+.webchat-language-btn:focus {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.7);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+}
+
+/* Мобильные стили для кнопок языков */
+@media (max-width: 480px) {
+    .webchat-language-btn {
+        font-size: 11px;
+        padding: 4px 6px;
+        height: 24px;
+        min-width: 28px;
+    }
+}
+
+/* Отдельный ряд для переключателя языков */
+.webchat-language-row {
+    padding: 8px 20px;
+    display: block;
+    margin: 0;
+    box-sizing: border-box;
+    background: rgba(102, 126, 234, 0.05);
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.webchat-language-row .webchat-language-switcher {
+    justify-content: flex-end;
+    margin: 0;
+}
+
+/* Скрываем ряд языков в свернутом состоянии */
+.webchat-widget.webchat-minimized .webchat-language-row {
+    display: none !important;
+}
+
+/* ==============================================
+   🌍 ВЫПАДАЮЩИЙ ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКОВ В ШАПКЕ (ОБНОВЛЕННЫЙ)
+   ============================================== */
+.webchat-language-dropdown {
+    position: relative;
+    margin: 0 8px 0 0;
+    z-index: 1000002;
+    display: flex;
+    align-items: center;
+}
+
+/* ✅ ОБНОВЛЕННАЯ КНОПКА: только флаг + стрелка */
+.webchat-language-toggle-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    color: white;
+    font-size: 12px;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    outline: none;
+    min-width: 45px;        /* ✅ УМЕНЬШИЛИ ШИРИНУ */
+    height: 28px;
+}
+
+.webchat-language-toggle-btn:hover {
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.5);
+    transform: translateY(-1px);
+}
+
+.webchat-language-dropdown.open .webchat-language-toggle-btn {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.6);
+}
+
+/* ✅ ТОЛЬКО ТЕКУЩИЙ ФЛАГ */
+.webchat-current-language {
+    font-size: 16px;       /* ✅ УВЕЛИЧИЛИ РАЗМЕР ФЛАГА */
+    line-height: 1;
+}
+
+/* ✅ УБИРАЕМ БЛОК С НАЗВАНИЯМИ ЯЗЫКОВ */
+.webchat-other-languages {
+    display: none !important;  /* ✅ ПОЛНОСТЬЮ СКРЫВАЕМ */
+}
+
+.webchat-dropdown-arrow {
+    font-size: 8px;
+    transition: transform 0.2s ease;
+    line-height: 1;
+}
+
+.webchat-language-dropdown.open .webchat-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+/* ✅ АДАПТИВНОЕ ВЫПАДАЮЩЕЕ МЕНЮ ПОД ТЕМЫ ЧАТА */
+.webchat-language-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #374151;  /* ✅ ТЕМНО-СЕРЫЙ ФОН (КАК В ДРУГИХ ВЫПАДАЮЩИХ СПИСКАХ) */
+    backdrop-filter: blur(10px);
+    border: 1px solid #4b5563;
+    border-radius: 8px;
+    padding: 4px 0;
+    min-width: 120px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 1000003;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.webchat-language-dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.webchat-language-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    color: white;            /* ✅ ЦВЕТ ТЕКСТА ПО УМОЛЧАНИЮ */
+    gap: 8px;
+}
+
+.webchat-language-option:hover {
+    background: #4b5563;  /* ✅ ТЕМНО-СЕРЫЙ ДЛЯ HOVER (КАК В ДРУГИХ ВЫПАДАЮЩИХ СПИСКАХ) */
+}
+
+.webchat-language-option-icon {
+    font-size: 14px;
+}
+
+.webchat-language-option-text {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ✅ СВЕТЛАЯ ТЕМА ДЛЯ ВЫПАДАЮЩЕГО МЕНЮ */
+.webchat-widget.webchat-theme-light .webchat-language-dropdown-menu {
+    background: white !important;
+    border-color: #e5e7eb !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+.webchat-widget.webchat-theme-light .webchat-language-option {
+    color: #374151 !important;
+}
+
+.webchat-widget.webchat-theme-light .webchat-language-option:hover {
+    background: #f3f4f6 !important;
+}
+
+/* ✅ ТЕМНАЯ ТЕМА ДЛЯ ВЫПАДАЮЩЕГО МЕНЮ */
+.webchat-widget.webchat-theme-dark .webchat-language-dropdown-menu {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-language-option {
+    color: #f9fafb !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-language-option:hover {
+    background: #4b5563 !important;
+}
+
+/* ✅ АВТОМАТИЧЕСКАЯ ТЕМА (СЛЕДУЕТ СИСТЕМНЫМ НАСТРОЙКАМ) */
+@media (prefers-color-scheme: light) {
+    .webchat-widget.webchat-theme-auto .webchat-language-dropdown-menu {
+        background: white !important;
+        border-color: #e5e7eb !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    }
+
+    .webchat-widget.webchat-theme-auto .webchat-language-option {
+        color: #374151 !important;
+    }
+
+    .webchat-widget.webchat-theme-auto .webchat-language-option:hover {
+        background: #f3f4f6 !important;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto .webchat-language-dropdown-menu {
+        background: #374151 !important;
+        border-color: #4b5563 !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+    }
+
+    .webchat-widget.webchat-theme-auto .webchat-language-option {
+        color: #f9fafb !important;
+    }
+
+    .webchat-widget.webchat-theme-auto .webchat-language-option:hover {
+        background: #4b5563 !important;
+    }
+}
+
+/* Скрываем в свернутом состоянии */
+.webchat-widget.webchat-minimized .webchat-language-dropdown {
+    display: none !important;
+}
+
+/* ✅ ВЫРАВНИВАНИЕ В ШАПКЕ С ДРУГИМИ ЭЛЕМЕНТАМИ */
+.webchat-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Обеспечиваем правильное выравнивание кнопки сворачивания */
+.webchat-minimize-btn {
+    margin-left: auto; /* Прижимаем к правому краю */
+}
+/* ==============================================
+   💬 СИСТЕМА КОНТАКТОВ
+   ============================================== */
+/* Контейнер для кнопки контактов */
+.webchat-contacts-container {
+    position: relative;
+    display: inline-block;
+    z-index: 1000003;
+}
+
+/* Кнопка контактов в шапке */
+.webchat-contacts-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    color: white;
+    font-size: 12px;
+    padding: 6px 8px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0 4px 0 0;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-weight: 500;
+    line-height: 1.2;
+    height: 28px;
+    min-width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1000003;
+}
+
+.webchat-contacts-btn:hover {
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.webchat-contacts-btn:focus {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.7);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+}
+
+/* Popup с контактами */
+.webchat-contacts-popup {
+    position: absolute !important;
+    top: 100% !important;
+    right: 0 !important;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    padding: 12px;
+    margin-top: 8px;
+    min-width: 200px;
+    display: none;
+    z-index: 1000004;
+    border: 1px solid #e5e7eb;
+    animation: webchat-contacts-fadeIn 0.2s ease-out;
+}
+
+.webchat-contacts-popup.show {
+    display: block;
+}
+
+/* Заголовок popup */
+.webchat-contacts-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+/* Контейнер иконок */
+.webchat-contacts-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 0;
+}
+/* ✅ НОВОЕ: Улучшенное позиционирование контактов */
+.webchat-contacts-container .webchat-contacts-popup {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 1000004;
+}
+
+.webchat-widget.webchat-minimized .webchat-contacts-container .webchat-contacts-popup {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 80px !important;
+    right: 25px !important;
+    z-index: 1000010 !important;
+    margin-top: 0 !important;
+}
+
+/* Иконки контактов */
+.webchat-contact-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 18px;
+    transition: all 0.2s ease;
+    position: relative;
+    cursor: pointer;
+    border: 2px solid transparent;
+    z-index: 1;                         /* ✅ НОВОЕ: базовый z-index */
+}
+
+.webchat-contact-icon:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000020;                   /* ✅ НОВОЕ: высокий z-index при hover */
+}
+
+/* Подсказки */
+.webchat-contact-tooltip {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #374151;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    z-index: 1000005;
+}
+
+.webchat-contact-icon:hover .webchat-contact-tooltip {
+    opacity: 1;
+    bottom: -35px;
+}
+
+/* Стили для разных контактов */
+.webchat-contact-telegram {
+    background: linear-gradient(135deg, #229ED9 0%, #0088cc 100%);
+    color: white;
+}
+
+.webchat-contact-whatsapp {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: white;
+}
+
+.webchat-contact-email {
+    background: linear-gradient(135deg, #EA4335 0%, #D33B2C 100%);
+    color: white;
+}
+
+.webchat-contact-twitter {
+    background: linear-gradient(135deg, #1DA1F2 0%, #0d8bd9 100%);
+    color: white;
+}
+
+.webchat-contact-instagram {
+    background: linear-gradient(135deg, #E4405F 0%, #C13584 50%, #833AB4 100%);
+    color: white;
+}
+
+.webchat-contact-messenger {
+    background: linear-gradient(135deg, #00B2FF 0%, #006AFF 100%);
+    color: white;
+}
+
+.webchat-contact-phone {
+    background: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+    color: white;
+}
+
+/* ✅ УЛУЧШЕНИЕ ВИДИМОСТИ КОНТАКТОВ */
+.webchat-contacts-popup.show {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+.webchat-contacts-popup {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.2s ease-out;
+}
+
+/* Анимация появления */
+@keyframes webchat-contacts-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Темная тема для контактов */
+.webchat-widget.webchat-theme-dark .webchat-contacts-popup {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-contacts-title {
+    color: #f9fafb !important;
+    border-color: #4b5563 !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-contact-tooltip {
+    background: #1f2937 !important;
+    color: #f9fafb !important;
+}
+
+/* Автоматическая тема для контактов */
+@media (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto .webchat-contacts-popup {
+        background: #374151 !important;
+        border-color: #4b5563 !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-contacts-title {
+        color: #f9fafb !important;
+        border-color: #4b5563 !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-contact-tooltip {
+        background: #1f2937 !important;
+        color: #f9fafb !important;
+    }
+}
+
+/* ==============================================
+   🎨 НОВАЯ СИСТЕМА ВЫБОРА ТЕМЫ
+   ============================================== */
+
+/* ✅ ТЕМНАЯ ТЕМА ПО КЛАССУ (принудительная) */
+.webchat-widget.webchat-theme-dark {
+    background: #1f2937 !important;    /* 🌙 ТЕМНЫЙ ФОН ЧАТА */
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4) !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-messages {
+    background: #111827 !important;    /* 🌙 ТЕМНЫЙ ФОН СООБЩЕНИЙ */
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message.webchat-bot .webchat-message-content {
+    background: #374151 !important;    /* 🌙 ФОН СООБЩЕНИЙ БОТА В ТЕМНОЙ ТЕМЕ */
+    border-color: #4b5563 !important;
+    color: #f9fafb !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-input-area {
+    background: #1f2937 !important;    /* 🌙 ФОН ОБЛАСТИ ВВОДА В ТЕМНОЙ ТЕМЕ */
+    border-color: #374151 !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message-input {
+    background: #374151 !important;    /* 🌙 ФОН ПОЛЯ ВВОДА В ТЕМНОЙ ТЕМЕ */
+    border-color: #4b5563 !important;
+    color: #f9fafb !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message-input::placeholder {
+    color: #9ca3af !important;         /* Цвет placeholder в темной теме */
+}
+
+.webchat-widget.webchat-theme-dark .webchat-quick-btn {
+    background: #2d3748 !important;    /* 🎨 ФОН КНОПОК (неактивные) */
+    color: #e2e8f0 !important;         /* 🎨 ЦВЕТ ТЕКСТА КНОПОК */
+    border: 1px solid #4299e14d !important; /* Граница кнопок */
+}
+
+.webchat-widget.webchat-theme-dark .webchat-config-select option {
+    background: #374151 !important;
+    color: #f9fafb !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message-content a {
+    color: #60a5fa !important;        /* 🔗 ЦВЕТ ССЫЛОК (светло-синий) */
+    text-decoration: underline !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message-content a:hover {
+    color: #93c5fd !important;        /* 🔗 ЦВЕТ ПРИ НАВЕДЕНИИ (еще светлее) */
+    text-decoration: none !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message-content a:visited {
+    color: #a78bfa !important;        /* 🔗 ЦВЕТ ПОСЕЩЕННЫХ ССЫЛОК (фиолетовый) */
+}
+
+.webchat-widget.webchat-theme-dark .webchat-typing-indicator {
+    color: #9ca3af !important;        /* Цвет индикатора печатания в темной теме */
+}
+
+.webchat-widget.webchat-theme-dark .webchat-error-message {
+    background: #7f1d1d !important;   /* Темный фон для ошибок */
+    color: #fecaca !important;        /* Светлый текст ошибок */
+    border-color: #991b1b !important; /* Темная граница */
+}
+
+/* ✅ СВЕТЛАЯ ТЕМА ПО КЛАССУ (принудительная) */
+.webchat-widget.webchat-theme-light {
+    background: #ffffff !important;    /* ☀️ СВЕТЛЫЙ ФОН ЧАТА */
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
+}
+
+.webchat-widget.webchat-theme-light .webchat-messages {
+    background: #f8fafc !important;    /* ☀️ СВЕТЛЫЙ ФОН СООБЩЕНИЙ */
+}
+
+.webchat-widget.webchat-theme-light .webchat-message.webchat-bot .webchat-message-content {
+    background: white !important;      /* ☀️ ФОН СООБЩЕНИЙ БОТА В СВЕТЛОЙ ТЕМЕ */
+    border-color: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+.webchat-widget.webchat-theme-light .webchat-input-area {
+    background: white !important;      /* ☀️ ФОН ОБЛАСТИ ВВОДА В СВЕТЛОЙ ТЕМЕ */
+    border-color: #e5e7eb !important;
+}
+
+.webchat-widget.webchat-theme-light .webchat-message-input {
+    background: white !important;      /* ☀️ ФОН ПОЛЯ ВВОДА В СВЕТЛОЙ ТЕМЕ */
+    border-color: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+.webchat-widget.webchat-theme-light .webchat-message-input::placeholder {
+    color: #9ca3af !important;         /* Цвет placeholder в светлой теме */
+}
+
+.webchat-widget.webchat-theme-light .webchat-quick-btn {
+    background: #f3f4f6 !important;    /* ☀️ ФОН КНОПОК (неактивные) */
+    color: #374151 !important;         /* ☀️ ЦВЕТ ТЕКСТА КНОПОК */
+    border: 1px solid #e5e7eb !important; /* Граница кнопок */
+}
+
+.webchat-widget.webchat-theme-light .webchat-config-select option {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+}
+
+.webchat-widget.webchat-theme-light .webchat-message-content a {
+    color: #2563eb !important;        /* 🔗 ЦВЕТ ССЫЛОК (синий) */
+    text-decoration: underline !important;
+}
+
+.webchat-widget.webchat-theme-light .webchat-message-content a:hover {
+    color: #1d4ed8 !important;        /* 🔗 ЦВЕТ ПРИ НАВЕДЕНИИ (темнее) */
+    text-decoration: none !important;
+}
+
+.webchat-widget.webchat-theme-light .webchat-message-content a:visited {
+    color: #7c3aed !important;        /* 🔗 ЦВЕТ ПОСЕЩЕННЫХ ССЫЛОК (фиолетовый) */
+}
+
+.webchat-widget.webchat-theme-light .webchat-typing-indicator {
+    color: #6b7280 !important;        /* Цвет индикатора печатания в светлой теме */
+}
+
+.webchat-widget.webchat-theme-light .webchat-error-message {
+    background: #fef2f2 !important;   /* Светлый фон для ошибок */
+    color: #dc2626 !important;        /* Темный текст ошибок */
+    border-color: #fecaca !important; /* Светлая граница */
+}
+
+/* ✅ АВТОМАТИЧЕСКАЯ ТЕМА (следует системным настройкам) */
+.webchat-widget.webchat-theme-auto {
+    /* Базовые стили уже заданы выше, здесь добавляем только медиа-запрос */
+}
+
+/* Медиа-запрос для автоматической темы - применяется только к .webchat-theme-auto */
+@media (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto {
+        background: #1f2937 !important;    /* 🌙 ТЕМНЫЙ ФОН ЧАТА */
+        box-shadow: 0 10px 40px rgba(0,0,0,0.4) !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-messages {
+        background: #111827 !important;    /* 🌙 ТЕМНЫЙ ФОН СООБЩЕНИЙ */
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-message.webchat-bot .webchat-message-content {
+        background: #374151 !important;    /* 🌙 ФОН СООБЩЕНИЙ БОТА В ТЕМНОЙ ТЕМЕ */
+        border-color: #4b5563 !important;
+        color: #f9fafb !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-input-area {
+        background: #1f2937 !important;    /* 🌙 ФОН ОБЛАСТИ ВВОДА В ТЕМНОЙ ТЕМЕ */
+        border-color: #374151 !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-message-input {
+        background: #374151 !important;    /* 🌙 ФОН ПОЛЯ ВВОДА В ТЕМНОЙ ТЕМЕ */
+        border-color: #4b5563 !important;
+        color: #f9fafb !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-message-input::placeholder {
+        color: #9ca3af !important;         /* Цвет placeholder в темной теме */
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-quick-btn {
+        background: #2d3748 !important;    /* 🎨 ФОН КНОПОК (неактивные) */
+        color: #e2e8f0 !important;         /* 🎨 ЦВЕТ ТЕКСТА КНОПОК */
+        border: 1px solid #4299e14d !important; /* Граница кнопок */
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-config-select option {
+        background: #374151 !important;
+        color: #f9fafb !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-message-content a {
+        color: #60a5fa !important;        /* 🔗 ЦВЕТ ССЫЛОК (светло-синий) */
+        text-decoration: underline !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-message-content a:hover {
+        color: #93c5fd !important;        /* 🔗 ЦВЕТ ПРИ НАВЕДЕНИИ (еще светлее) */
+        text-decoration: none !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-message-content a:visited {
+        color: #a78bfa !important;        /* 🔗 ЦВЕТ ПОСЕЩЕННЫХ ССЫЛОК (фиолетовый) */
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-typing-indicator {
+        color: #9ca3af !important;        /* Цвет индикатора печатания в темной теме */
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-error-message {
+        background: #7f1d1d !important;   /* Темный фон для ошибок */
+        color: #fecaca !important;        /* Светлый текст ошибок */
+        border-color: #991b1b !important; /* Темная граница */
+    }
+}
+
+/* ==============================================
+   ДОПОЛНИТЕЛЬНЫЕ НАСТРОЙКИ ДЛЯ СПЕЦИФИЧНОСТИ
+   ============================================== */
+
+/* Увеличиваем специфичность селекторов для веб-чата */
+.webchat-widget.webchat-widget {
+    /* Двойной класс для повышения специфичности */
+    /* Это поможет избежать конфликтов с глобальными стилями сайта */
+}
+
+/* Обеспечиваем приоритет стилей чата над глобальными */
+.webchat-widget * {
+    /* Сброс наследования от родительских элементов сайта */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    box-sizing: border-box;
+}
+
+/* Защита от сброса глобальных стилей */
+.webchat-widget .webchat-loading-dots::after {
+    /* Дополнительная специфичность для анимации точек */
+    content: '';
+    display: inline;
+    animation: webchat-loading-dots 1.5s infinite;
+}
+/* =======================================================================
+   🎯 КОМПАКТНЫЙ РЕЖИМ БЕЗ ФОНА ВИДЖЕТА
+   ======================================================================= */
+
+/* ✅ БАЗОВЫЙ КОМПАКТНЫЙ РЕЖИМ - ПРОЗРАЧНЫЙ ФОН */
+.webchat-widget.webchat-minimized.webchat-compact {
+    /* Размеры применяются через JavaScript */
+    padding: 0 !important;
+    overflow: visible !important;
+    cursor: pointer !important;
+    /* ⭐ УБИРАЕМ ВСЕ ФОНЫ И ТЕНИ ВИДЖЕТА */
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Убираем автоматическую высоту для компактного режима */
+.webchat-widget.webchat-minimized.webchat-compact {
+    height: auto !important; /* Удалите эту строку если есть */
+}
+
+/* ✅ КОМПАКТНАЯ ШАПКА - ЕДИНСТВЕННЫЙ ВИДИМЫЙ ЭЛЕМЕНТ */
+.webchat-widget.webchat-minimized.webchat-compact .webchat-header {
+    padding: 10px 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    border-radius: 16px !important;
+    height: 100% !important;  /* Изменено с auto на 100% */
+    max-height: 100% !important;  /* Добавлено для ограничения */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;  /* Добавлено чтобы скрыть лишнее содержимое */
+}
+
+/* ✅ СКРЫВАЕМ ПЕРЕКЛЮЧАТЕЛЬ И КОНТАКТЫ В КОМПАКТНОМ РЕЖИМЕ */
+.webchat-widget.webchat-minimized.webchat-compact .webchat-config-switcher,
+.webchat-widget.webchat-minimized.webchat-compact .webchat-contacts-container {
+    display: none !important;
+}
+
+/* ⭐ ГЛАВНОЕ ИСПРАВЛЕНИЕ: СКРЫВАЕМ КРЕСТИК В КОМПАКТНОМ РЕЖИМЕ */
+.webchat-widget.webchat-minimized.webchat-compact .webchat-minimize-btn {
+    display: none !important;
+}
+
+/* ✅ КОМПАКТНАЯ ИНФОРМАЦИЯ О БОТЕ */
+.webchat-widget.webchat-minimized.webchat-compact .webchat-header-info {
+    flex: 1 !important;
+    margin: 0 !important;
+    padding: 2px 0 !important;          /* ✅ НОВОЕ: небольшой отступ сверху/снизу */
+    display: flex !important;           /* ✅ НОВОЕ: флекс для вертикального выравнивания */
+    flex-direction: column !important;  /* ✅ НОВОЕ: колонка */
+    justify-content: center !important; /* ✅ НОВОЕ: центрируем по вертикали */
+}
+
+.webchat-widget.webchat-minimized.webchat-compact .webchat-header-title {
+    max-width: 160px !important;       /* ✅ УВЕЛИЧЕНА ширина */
+    white-space: normal !important;    /* ✅ ИСПРАВЛЕНО: разрешаем перенос */
+    word-wrap: break-word !important;  /* ✅ НОВОЕ: переносим длинные слова */
+    overflow: visible !important;      /* ✅ ИСПРАВЛЕНО: показываем весь текст */
+    text-overflow: unset !important;   /* ✅ УБИРАЕМ троеточие */
+    line-height: 1.1 !important;      /* ✅ НОВОЕ: компактная высота строки */
+}
+
+.webchat-widget.webchat-minimized.webchat-compact .webchat-header-subtitle {
+    max-width: 160px !important;       /* ✅ УВЕЛИЧЕНА ширина */
+    white-space: normal !important;    /* ✅ ИСПРАВЛЕНО: разрешаем перенос */
+    word-wrap: break-word !important;  /* ✅ НОВОЕ: переносим длинные слова */
+    overflow: visible !important;      /* ✅ ИСПРАВЛЕНО: показываем весь текст */
+    text-overflow: unset !important;   /* ✅ УБИРАЕМ троеточие */
+    line-height: 1.0 !important;      /* ✅ НОВОЕ: ещё более компактная высота */
+    font-size: 10px !important;       /* ✅ НОВОЕ: уменьшаем шрифт подзаголовка */
+}
+
+/* ✅ КОМПАКТНЫЙ СТАТУС ИНДИКАТОР */
+.webchat-widget.webchat-minimized.webchat-compact .webchat-status-indicator {
+    width: 8px !important;
+    height: 8px !important;
+    flex-shrink: 0 !important;
+}
+
+/* ✅ HOVER ЭФФЕКТ - ТОЛЬКО ДЛЯ HEADER */
+.webchat-widget.webchat-minimized.webchat-compact:hover .webchat-header {
+    transform: scale(1.05) !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* ✅ АДАПТАЦИЯ ЭЛЕМЕНТОВ ПОД МАЛЕНЬКУЮ ВЫСОТУ */
+.webchat-widget.webchat-minimized.webchat-compact .webchat-header-info {
+    min-height: unset !important;
+    padding: 0 !important;
+}
+
+.webchat-widget.webchat-minimized.webchat-compact .webchat-header-title {
+    font-size: 14px !important;  /* Уменьшаем размер шрифта для маленькой высоты */
+    line-height: 1.1 !important;
+    margin: 0 !important;
+}
+
+.webchat-widget.webchat-minimized.webchat-compact .webchat-header-subtitle {
+    font-size: 12px !important;
+    line-height: 1.0 !important;
+    margin: 0 !important;
+}
+
+/* Адаптация индикатора статуса */
+.webchat-widget.webchat-minimized.webchat-compact .webchat-status-indicator {
+    width: 6px !important;
+    height: 6px !important;
+}
+
+/* Убираем внутренние отступы при очень маленькой высоте */
+.webchat-widget.webchat-minimized.webchat-compact[style*="height: 30px"] .webchat-header,
+.webchat-widget.webchat-minimized.webchat-compact[style*="height: 40px"] .webchat-header {
+    padding: 5px 8px !important;
+}
+
+/* =======================================================================
+   🎯 РАЗВЕРНУТОЕ СОСТОЯНИЕ НА МОБИЛЬНЫХ (ЕДИНСТВЕННОЕ ДОПОЛНЕНИЕ)
+   ======================================================================= */
+
+@media (max-width: 480px) {
+    .webchat-widget:not(.webchat-minimized) {
+        transform-origin: center center !important;
+    }
+    
+}
+/* ==============================================
+   DRAG & DROP СТИЛИ
+   ============================================== */
+.webchat-widget.webchat-dragover {
+    background: rgba(102, 126, 234, 0.1) !important;
+    border: 2px dashed #667eea !important;
+}
+
+.webchat-widget.webchat-dragover .webchat-header {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+}
+
+.webchat-widget.webchat-dragover::after {
+    content: "📎 Отпустите для загрузки файла";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(102, 126, 234, 0.9);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 1000000;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* ==============================================
+   ТЕМНАЯ ТЕМА ДЛЯ DRAG & DROP
+   ============================================== */
+.webchat-widget.webchat-theme-dark.webchat-dragover {
+    background: rgba(102, 126, 234, 0.2) !important;
+}
+
+.webchat-widget.webchat-theme-auto.webchat-dragover {
+    background: rgba(102, 126, 234, 0.15) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto.webchat-dragover {
+        background: rgba(102, 126, 234, 0.2) !important;
+    }
+}
+/* ==============================================
+   СИСТЕМА ВРЕМЕНИ СООБЩЕНИЙ (КАК В TELEGRAM)
+   ============================================== */
+
+/* ✅ ВРЕМЯ СООБЩЕНИЙ */
+.webchat-message-time {
+    font-size: 11px !important;
+    color: rgba(0, 0, 0, 0.5) !important;
+    margin-top: 4px !important;
+    display: block !important;
+    line-height: 1 !important;
+    user-select: none !important;
+    pointer-events: none !important;
+}
+
+/* Время для сообщений пользователя (справа) */
+.webchat-message.webchat-user .webchat-message-time {
+    text-align: right !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Время для сообщений бота (слева) */
+.webchat-message.webchat-bot .webchat-message-time {
+    text-align: left !important;
+    color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ✅ ЗАГОЛОВКИ ДАТ */
+.webchat-date-header {
+    display: flex !important;
+    justify-content: center !important;
+    margin: 20px 0 15px 0 !important;
+    padding: 0 !important;
+}
+
+.webchat-date-header-content {
+    background: rgba(0, 0, 0, 0.1) !important;
+    color: #6b7280 !important;
+    padding: 6px 12px !important;
+    border-radius: 12px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    user-select: none !important;
+    pointer-events: none !important;
+}
+
+/* ✅ ВСПЛЫВАЮЩАЯ ДАТА ПРИ ПРОКРУТКЕ - СТИЛЬ TELEGRAM */
+.webchat-scroll-date {
+    position: fixed !important;                 /* ✅ Fixed для точного позиционирования */
+    /* top и left устанавливаются через JavaScript */
+    transform: translateX(-50%) !important;     /* ✅ Центрируем только по горизонтали */
+    background: rgba(0, 0, 0, 0.6) !important;  /* ✅ Полупрозрачный серый как в Telegram */
+    color: white !important;
+    padding: 6px 12px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    z-index: 999999 !important;
+    pointer-events: none !important;
+    opacity: 0 !important;                      /* ✅ Скрыт по умолчанию */
+    visibility: hidden !important;              /* ✅ Скрыт по умолчанию */
+    transition: opacity 0.3s ease-in-out !important;
+    white-space: nowrap !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    min-width: 60px !important;
+    text-align: center !important;
+    backdrop-filter: blur(4px) !important;      /* ✅ Легкое размытие фона */
+    -webkit-backdrop-filter: blur(4px) !important;
+}
+
+.webchat-scroll-date.show {
+    opacity: 1 !important;                      /* ✅ Показываем при активации */
+    visibility: visible !important;             /* ✅ Показываем при активации */
+}
+
+/* ✅ УБИРАЕМ position: relative из контейнера - больше не нужно для fixed */
+.webchat-messages {
+    /* position: relative убрано - не нужно для fixed позиционирования */
+}
+
+/* ✅ ТЕМНАЯ ТЕМА */
+.webchat-widget.webchat-theme-dark .webchat-scroll-date {
+    background: rgba(255, 255, 255, 0.15) !important; /* ✅ Светлый полупрозрачный для темной темы */
+    color: #e5e7eb !important;
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ✅ СВЕТЛАЯ ТЕМА */
+.webchat-widget.webchat-theme-light .webchat-scroll-date {
+    background: rgba(0, 0, 0, 0.6) !important;  /* ✅ Темный полупрозрачный для светлой темы */
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ✅ АВТОМАТИЧЕСКАЯ ТЕМА (следует системной) */
+@media (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto .webchat-scroll-date {
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: #e5e7eb !important;
+        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1) !important;
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    .webchat-widget.webchat-theme-auto .webchat-scroll-date {
+        background: rgba(0, 0, 0, 0.6) !important;
+        color: white !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    }
+}
+
+/* ✅ МОБИЛЬНЫЕ УСТРОЙСТВА */
+@media (max-width: 480px) {
+    .webchat-scroll-date {
+        font-size: 12px !important;
+        padding: 5px 10px !important;
+        border-radius: 10px !important;
+        min-width: 50px !important;
+    }
+}
+
+/* ✅ СТИЛИ ДЛЯ ВРЕМЕНИ СООБЩЕНИЙ (оставляем как есть) */
+.webchat-message.webchat-voice-message .webchat-message-time {
+    margin-top: 8px !important;
+    margin-left: 0 !important;
+    text-align: left !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message-time {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message.webchat-user .webchat-message-time {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-date-header-content {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #9ca3af !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto .webchat-message.webchat-user .webchat-message-time {
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-date-header-content {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #9ca3af !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .webchat-message-time {
+        font-size: 10px !important;
+        margin-top: 3px !important;
+    }
+    
+    .webchat-date-header {
+        margin: 15px 0 10px 0 !important;
+    }
+    
+    .webchat-date-header-content {
+        font-size: 11px !important;
+        padding: 5px 10px !important;
+    }
+}
+
+/* ✅ ИНТЕГРАЦИЯ С СУЩЕСТВУЮЩИМИ СТИЛЯМИ */
+.webchat-message-content {
+    position: relative !important;
+}
+
+/* Стили для контента сообщений с временем (убираем :has селектор) */
+.webchat-message-content .webchat-message-time {
+    margin-top: 4px !important;
+}
+
+.webchat-message-content {
+    padding-bottom: 4px !important; /* Базовый отступ для всех сообщений */
+}
+
+/* ✅ АНИМАЦИИ */
+@keyframes webchat-dateSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.webchat-date-header {
+    animation: webchat-dateSlideIn 0.3s ease-out !important;
+}
+
+/* ✅ СОВМЕСТИМОСТЬ С ФАЙЛОВЫМИ СООБЩЕНИЯМИ */
+.webchat-message-file + .webchat-message-time,
+.webchat-message-image + .webchat-message-time {
+    margin-top: 6px !important;
+}
+
+/* ✅ ВЫСОКАЯ СПЕЦИФИЧНОСТЬ ДЛЯ ПЕРЕОПРЕДЕЛЕНИЯ */
+.webchat-widget .webchat-message .webchat-message-content .webchat-message-time {
+    font-size: 11px !important;
+    display: block !important;
+    margin-top: 4px !important;
+}
+
+/* Скрытие области ввода когда showInputArea: false */
+.webchat-widget.webchat-hide-input .webchat-input-controls {
+    display: none !important;
+}
+
+/* Скрытие превью файлов и индикатора загрузки */
+.webchat-widget.webchat-hide-input .webchat-file-preview,
+.webchat-widget.webchat-hide-input .webchat-file-uploading {
+    display: none !important;
+}
+
+/* Убираем отступ сверху когда нет поля ввода */
+.webchat-widget.webchat-hide-input .webchat-input-area {
+    padding-top: 12px;
+    padding-bottom: 20px;
+}
+
+/* Убираем границу когда остались только быстрые кнопки */
+.webchat-widget.webchat-hide-input .webchat-input-area {
+    border-top: none;
+}
+
+/* ==============================================
+   ВИДЕО В КРУЖКЕ (КАК В TELEGRAM)
+   ============================================== */
+
+/* ✅ МАКСИМАЛЬНО СПЕЦИФИЧНЫЕ СЕЛЕКТОРЫ ДЛЯ УБИРАНИЯ ФОНА */
+.webchat-widget .webchat-message.webchat-bot.webchat-video-message {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.webchat-widget .webchat-message.webchat-bot.webchat-video-message .webchat-message-content {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+}
+
+/* ✅ СВЕТЛАЯ ТЕМА - темный текст */
+.webchat-widget.webchat-theme-light .webchat-message.webchat-bot.webchat-video-message {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.webchat-widget.webchat-theme-light .webchat-message.webchat-bot.webchat-video-message .webchat-message-content {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #374151 !important;
+}
+
+/* ✅ ТЕМНАЯ ТЕМА - светлый текст */
+.webchat-widget.webchat-theme-dark .webchat-message.webchat-bot.webchat-video-message {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.webchat-widget.webchat-theme-dark .webchat-message.webchat-bot.webchat-video-message .webchat-message-content {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #f9fafb !important;
+}
+
+/* ✅ АВТОТЕМА - по умолчанию */
+.webchat-widget.webchat-theme-auto .webchat-message.webchat-bot.webchat-video-message {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.webchat-widget.webchat-theme-auto .webchat-message.webchat-bot.webchat-video-message .webchat-message-content {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* ✅ АВТОТЕМА В ТЕМНОМ РЕЖИМЕ - светлый текст */
+@media (prefers-color-scheme: dark) {
+    .webchat-widget.webchat-theme-auto .webchat-message.webchat-bot.webchat-video-message {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .webchat-widget.webchat-theme-auto .webchat-message.webchat-bot.webchat-video-message .webchat-message-content {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #f9fafb !important;
+    }
+}
+
+/* Контейнер видеосообщения */
+.webchat-video-message {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 200px;
+}
+
+/* Круглое превью видео */
+.webchat-video-circle {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    background: #1f2937;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease;
+}
+
+.webchat-video-circle:hover {
+    transform: scale(1.05);
+}
+
+/* Само видео внутри круга */
+.webchat-video-circle video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Кнопка Play в центре */
+.webchat-video-play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #667eea;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    opacity: 0;
+    pointer-events: auto;
+}
+
+/* Показываем кнопку при наведении на видео */
+.webchat-video-circle:hover .webchat-video-play-btn {
+    opacity: 1;
+}
+
+/* Показываем кнопку когда видео на паузе */
+.webchat-video-play-btn:not(.playing) {
+    opacity: 1;
+}
+
+.webchat-video-play-btn:hover {
+    background: white;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.webchat-video-play-btn.playing {
+    opacity: 0;  /* Скрываем во время воспроизведения */
+}
+
+/* Показываем кнопку паузы при наведении во время воспроизведения - ТОЛЬКО НА DESKTOP */
+@media (hover: hover) and (pointer: fine) {
+    .webchat-video-circle:hover .webchat-video-play-btn.playing {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.7);
+    }
+}
+
+/* НА МОБИЛЬНЫХ (touch) - кнопка всегда скрыта при воспроизведении */
+@media (hover: none) and (pointer: coarse) {
+    .webchat-video-play-btn.playing {
+        opacity: 0 !important;  /* Принудительно скрываем */
+    }
+    
+    /* Показываем только когда видео на паузе */
+    .webchat-video-play-btn:not(.playing) {
+        opacity: 1 !important;
+    }
+}
+
+/* Иконка Play */
+.webchat-video-play-btn .play-icon {
+    display: inline;
+    margin-left: 3px;
+}
+
+.webchat-video-play-btn .pause-icon {
+    display: none;
+}
+
+.webchat-video-play-btn.playing .play-icon {
+    display: none;
+}
+
+.webchat-video-play-btn.playing .pause-icon {
+    display: inline;
+}
+
+/* Скрываем надпись под видео */
+.webchat-video-info {
+    display: none !important;
+}
+
+/* Круговой прогресс по краю (как в Telegram) */
+.webchat-video-circle-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.webchat-video-circle-progress svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    overflow: visible;
+}
+
+.webchat-video-circle-progress circle {
+    fill: none;
+    stroke: #667eea;
+    stroke-width: 2;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.1s linear;
+    opacity: 0.8;
+}
+
+/* Прогресс бар для видео */
+.webchat-video-progress {
+    width: 100%;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
+.webchat-video-progress-bar {
+    height: 100%;
+    background: #667eea;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+/* Полноэкранный режим */
+.webchat-video-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: webchat-fadeIn 0.3s ease;
+}
+
+.webchat-video-fullscreen video {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 12px;
+}
+
+.webchat-video-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.webchat-video-close-btn:hover {
+    background: white;
+    transform: scale(1.1);
+}
+/* ==============================================
+   УЛУЧШЕНИЯ ДЛЯ МОБИЛЬНЫХ
+   ============================================== */
+
+/* Убираем hover эффекты на touch устройствах */
+@media (hover: none) and (pointer: coarse) {
+    .webchat-video-circle:hover {
+        transform: scale(1) !important; /* Убираем увеличение при касании */
+    }
+}
+
+/* Дополнительно для маленьких экранов (опционально) */
+@media (max-width: 480px) {
+    /* Уменьшаем толщину прогресса на мобильных */
+    .webchat-video-circle-progress circle {
+        stroke-width: 2;
+    }
+}
+
+/* ==============================================
+   ✨ МОБИЛЬНАЯ ВЕРСИЯ
+   ============================================== */
+
+/* Мобильные устройства до 480px - полноэкранный режим */
+@media (max-width: 480px) {
+    .webchat-widget {
+        width: 100vw !important;
+        height: 100vh !important;
+        bottom: 0 !important;
+        right: 0 !important;
+        border-radius: 0 !important;
+        max-width: 100vw !important;
+    }
+
+    .webchat-widget.webchat-minimized .webchat-header {
+        padding: 14px 20px !important;
+    }
+
+    .webchat-widget.webchat-minimized .webchat-header-title {
+        font-size: 14px !important;
+    }
+}
+
+/* Планшеты от 481px до 768px - адаптивный режим с отступами */
+@media (max-width: 768px) and (min-width: 481px) {
+    .webchat-widget {
+        width: calc(100vw - 20px) !important;
+        height: calc(100vh - 100px) !important;
+    }
+}
+
+/* ==============================================
+   ✨ БРЕНДИРОВАНИЕ ЧАТА (POWERED BY)
+   ============================================== */
+
+/* Контейнер брендирования */
+.webchat-branding-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 4px 16px;
+    transition: all 0.3s ease;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+/* Темная тема для контейнера брендирования */
+.webchat-widget.webchat-theme-dark .webchat-branding-container {
+    /* Без дополнительных стилей - интегрировано в дизайн */
+}
+
+/* Скрываем брендирование когда чат свернут */
+.webchat-widget.webchat-minimized .webchat-branding-container,
+.webchat-widget.webchat-compact .webchat-branding-container {
+    display: none !important;
+}
+
+/* Логотип SVG */
+.webchat-branding-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.webchat-branding-logo svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Hover эффект для логотипа */
+.webchat-branding-container:hover .webchat-branding-logo {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+/* Текстовый блок брендирования */
+.webchat-branding-text {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    transition: opacity 0.2s ease;
+}
+
+/* Hover эффект для текста */
+.webchat-branding-container:hover .webchat-branding-text {
+    opacity: 0.8;
+}
+
+/* "Powered by" текст */
+.webchat-branding-powered {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.01em;
+}
+
+/* Название компании */
+.webchat-branding-company {
+    font-size: 13px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+}
+
+/* Темная тема для текстов */
+.webchat-widget.webchat-theme-dark .webchat-branding-powered {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.webchat-widget.webchat-theme-dark .webchat-branding-company {
+    background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Вариант: только иконка + текст (без SVG) */
+.webchat-branding-icon {
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.webchat-branding-container:hover .webchat-branding-icon {
+    transform: scale(1.1);
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 480px) {
+    .webchat-branding-container {
+        padding: 5px 15px;
+        gap: 6px;
+    }
+
+    .webchat-branding-powered {
+        font-size: 10px;
+    }
+
+    .webchat-branding-company {
+        font-size: 12px;
+    }
+
+    .webchat-branding-icon {
+        font-size: 18px;
+    }
+
+    /* Восстановление стандартного отступа на мобильных, когда брендирование выключено */
+    .webchat-widget.webchat-hide-branding .webchat-input-area {
+        padding-bottom: 20px !important;
+    }
+}
+
+/* Опция: скрыть брендирование полностью */
+.webchat-widget.webchat-hide-branding .webchat-branding-container {
+    display: none !important;
+}
+
+/* Анимация появления брендирования */
+@keyframes webchat-branding-fadein {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.webchat-branding-container {
+    animation: webchat-branding-fadein 0.4s ease-out;
+}
