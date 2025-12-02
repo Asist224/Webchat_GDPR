@@ -264,6 +264,70 @@ class GDPRManager {
         return {};
     }
 
+    // Обновление текстов GDPR при смене языка
+    updateTexts() {
+        const texts = this.getTexts();
+
+        // Обновляем Consent Banner
+        const bannerTitle = document.querySelector('#gdprConsentBanner .gdpr-banner-title');
+        const bannerText = document.querySelector('#gdprConsentBanner .gdpr-banner-text');
+        const acceptBtn = document.getElementById('gdprAcceptBtn');
+        const declineBtn = document.getElementById('gdprDeclineBtn');
+        const privacyLink = document.querySelector('#gdprConsentBanner .gdpr-policy-link');
+
+        if (bannerTitle) bannerTitle.textContent = texts.consentTitle || 'Privacy & Cookies';
+        if (bannerText) {
+            const mainText = this.config.consentBanner?.customText || texts.consentText || 'We use this chat to process your requests.';
+            const aiText = this.config.aiDisclosure?.enabled ? (texts.consentTextAI || '') : '';
+            bannerText.innerHTML = mainText + (aiText ? `<br><br>${aiText}` : '');
+        }
+        if (acceptBtn) acceptBtn.textContent = texts.acceptButton || 'Accept & Continue';
+        if (declineBtn) declineBtn.textContent = texts.declineButton || 'Decline';
+        if (privacyLink) privacyLink.innerHTML = `📋 ${texts.privacyLinkText || 'Privacy Policy'}`;
+
+        // Обновляем Pre-Chat Form
+        const formTitle = document.querySelector('#gdprPreChatForm .gdpr-prechat-title');
+        const formSubtitle = document.querySelector('#gdprPreChatForm .gdpr-prechat-subtitle');
+        const formSubmitBtn = document.querySelector('#gdprPreChatForm .gdpr-btn-accept');
+        const formInfo = document.querySelector('#gdprPreChatForm .gdpr-form-info');
+        const formCheckboxText = document.querySelector('#gdprPreChatForm .gdpr-checkbox-text');
+
+        if (formTitle) formTitle.textContent = texts.formTitle || 'Start a Conversation';
+        if (formSubtitle) formSubtitle.textContent = texts.formSubtitle || 'Please fill out the form before starting the chat';
+        if (formSubmitBtn) formSubmitBtn.textContent = texts.startChatButton || 'Start Chat';
+        if (formInfo) formInfo.textContent = texts.requiredFieldMark || '* - required field';
+        if (formCheckboxText) {
+            const checkboxLink = formCheckboxText.querySelector('a');
+            const linkHTML = checkboxLink ? checkboxLink.outerHTML : '';
+            formCheckboxText.innerHTML = (texts.gdprCheckboxText || 'I agree to the processing of my personal data') + ' ' + linkHTML;
+        }
+
+        // Обновляем метки полей формы
+        const fields = this.config.preChatForm?.fields || [];
+        fields.forEach(field => {
+            const label = document.querySelector(`#gdprPreChatForm label[for="${field.id}"], #gdprPreChatForm input[name="${field.id}"]`)?.closest('.gdpr-form-group')?.querySelector('.gdpr-form-label');
+            const input = document.querySelector(`#gdprPreChatForm input[name="${field.id}"]`);
+            if (label) {
+                const labelText = texts[`${field.id}Label`] || field.id;
+                const requiredMark = field.required ? '<span class="gdpr-required">*</span>' : '';
+                const piiIcon = field.isPII ? `<span class="gdpr-pii-icon" title="${texts.piiIndicator || '🔒 Personal data'}">🔒</span>` : '';
+                label.innerHTML = `${labelText}${requiredMark} ${piiIcon}`;
+            }
+            if (input) {
+                input.placeholder = texts[`${field.id}Placeholder`] || '';
+            }
+        });
+
+        // Обновляем Declined Message
+        const declinedText = document.querySelector('#gdprDeclinedMessage .gdpr-declined-text');
+        const reconsiderBtn = document.getElementById('gdprReconsiderBtn');
+
+        if (declinedText) declinedText.textContent = texts.declinedMessage || texts.consentRequired || 'Consent is required to use the chat';
+        if (reconsiderBtn) reconsiderBtn.textContent = texts.declinedReconsiderButton || texts.acceptButton || 'Accept & Continue';
+
+        console.log('🔒 [GDPR] Тексты обновлены для нового языка');
+    }
+
     renderConsentBanner() {
         if (!this.isEnabled() || !this.config.consentBanner?.enabled) return '';
         if (this.hasConsent() || this.consentDeclined) return '';
@@ -2772,11 +2836,14 @@ updateInterface() {
     
     // ✅ НОВОЕ: Обновляем все интерфейсные тексты после смены языка
     this.updateInterfaceTexts();
-    
+
     // ✅ НОВОЕ: Синхронизируем состояние быстрых кнопок с конфигурацией
     this.quickButtonsCollapsed = this.config.behavior && this.config.behavior.quickButtonsCollapsed === true;
-    
-    
+
+    // ✅ НОВОЕ: Обновляем тексты GDPR при смене языка
+    if (this.gdprManager) {
+        this.gdprManager.updateTexts();
+    }
 }
 
     // ✅ УЛУЧШЕННОЕ: Генерация выпадающего списка конфигураций с проверкой доступности
