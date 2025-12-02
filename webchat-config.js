@@ -576,6 +576,12 @@ commands: {
             emailRequired: "Email обязателен для этого действия",
             emailInvalid: "Введите корректный email адрес",
 
+            // Declined State
+            declinedTitle: "Согласие отклонено",
+            declinedMessage: "Вы отклонили согласие на обработку данных. Чат недоступен.",
+            declinedReconsiderButton: "Пересмотреть решение",
+            inputDisabledPlaceholder: "Чат недоступен без согласия",
+
             // Data View Modal
             dataViewTitle: "Ваши данные",
             dataViewEmpty: "Нет сохраненных данных",

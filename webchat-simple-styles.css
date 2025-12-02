@@ -3704,13 +3704,15 @@
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
+    flex-direction: column;  /* ✅ Кнопки в столбик */
 }
 
 .gdpr-btn {
-    flex: 1;
-    min-width: 120px;
-    padding: 12px 20px;
+    flex: none;  /* ✅ Кнопки не растягиваются */
+    width: 100%;
+    padding: 14px 20px;  /* ✅ Увеличен padding */
     border-radius: 10px;
+    margin-bottom: 0;  /* gap обеспечивает отступ */
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -4128,7 +4130,16 @@
 .webchat-theme-dark .gdpr-banner-text,
 .webchat-theme-dark .gdpr-prechat-subtitle,
 .webchat-theme-dark .gdpr-declined-text {
-    color: #9ca3af;
+    color: #d1d5db;  /* ✅ Сделано ярче для лучшей читаемости */
+}
+
+/* ✅ Ссылки в тёмной теме */
+.webchat-theme-dark .gdpr-policy-link {
+    color: #93c5fd;
+}
+
+.webchat-theme-dark .gdpr-policy-link:hover {
+    color: #bfdbfe;
 }
 
 .webchat-theme-dark .gdpr-form-label {

@@ -270,7 +270,8 @@ class GDPRManager {
 
         const texts = this.getTexts();
         const position = this.config.consentBanner?.position || 'bottom';
-        const showPrivacyLink = this.config.consentBanner?.showPrivacyLink && this.config.privacyPolicyUrl;
+        const showPrivacyLink = this.config.consentBanner?.showPrivacyLink;
+        const privacyUrl = this.config.privacyPolicyUrl || '#';
         const showCookieLink = this.config.consentBanner?.showCookieLink && this.config.cookiePolicyUrl;
         const showTermsLink = this.config.consentBanner?.showTermsLink && this.config.termsOfServiceUrl;
         const showDeclineButton = this.config.consentBanner?.showDeclineButton !== false;
@@ -279,23 +280,36 @@ class GDPRManager {
         const mainText = customText || texts.consentText || 'We use this chat to process your requests.';
         const aiText = this.config.aiDisclosure?.enabled ? (texts.consentTextAI || '') : '';
 
+        // ✅ Ссылки на политики
+        let linksHTML = '';
+        if (showPrivacyLink || showCookieLink || showTermsLink) {
+            linksHTML = '<div class="gdpr-policy-links">';
+            if (showPrivacyLink) {
+                linksHTML += `<a href="${privacyUrl}" target="_blank" class="gdpr-policy-link">📋 ${texts.privacyLinkText || 'Privacy Policy'}</a>`;
+            }
+            if (showCookieLink) {
+                linksHTML += `<a href="${this.config.cookiePolicyUrl}" target="_blank" class="gdpr-policy-link">🍪 ${texts.cookieLinkText || 'Cookie Policy'}</a>`;
+            }
+            if (showTermsLink) {
+                linksHTML += `<a href="${this.config.termsOfServiceUrl}" target="_blank" class="gdpr-policy-link">📄 ${texts.termsLinkText || 'Terms of Service'}</a>`;
+            }
+            linksHTML += '</div>';
+        }
+
         return `
             <div class="gdpr-consent-banner gdpr-position-${position}" id="gdprConsentBanner">
-                <div class="gdpr-consent-content">
-                    <div class="gdpr-consent-title">${texts.consentTitle || '🔒 Privacy & Cookies'}</div>
-                    <div class="gdpr-consent-text">
-                        ${mainText}
-                        ${aiText ? `<br><br>${aiText}` : ''}
-                    </div>
-                    <div class="gdpr-consent-links">
-                        ${showPrivacyLink ? `<a href="${this.config.privacyPolicyUrl}" target="_blank" class="gdpr-link">${texts.privacyLinkText || 'Privacy Policy'}</a>` : ''}
-                        ${showCookieLink ? `<a href="${this.config.cookiePolicyUrl}" target="_blank" class="gdpr-link">${texts.cookieLinkText || 'Cookie Policy'}</a>` : ''}
-                        ${showTermsLink ? `<a href="${this.config.termsOfServiceUrl}" target="_blank" class="gdpr-link">${texts.termsLinkText || 'Terms of Service'}</a>` : ''}
-                    </div>
-                    <div class="gdpr-consent-buttons">
-                        <button class="gdpr-btn gdpr-btn-accept" id="gdprAcceptBtn">${texts.acceptButton || 'Accept & Continue'}</button>
-                        ${showDeclineButton ? `<button class="gdpr-btn gdpr-btn-decline" id="gdprDeclineBtn">${texts.declineButton || 'Decline'}</button>` : ''}
-                    </div>
+                <div class="gdpr-banner-header">
+                    <span class="gdpr-banner-icon">🔒</span>
+                    <h3 class="gdpr-banner-title">${texts.consentTitle || 'Privacy & Cookies'}</h3>
+                </div>
+                <div class="gdpr-banner-text">
+                    ${mainText}
+                    ${aiText ? `<br><br>${aiText}` : ''}
+                </div>
+                ${linksHTML}
+                <div class="gdpr-banner-actions">
+                    <button class="gdpr-btn gdpr-btn-accept" id="gdprAcceptBtn">${texts.acceptButton || 'Accept & Continue'}</button>
+                    ${showDeclineButton ? `<button class="gdpr-btn gdpr-btn-decline" id="gdprDeclineBtn">${texts.declineButton || 'Decline'}</button>` : ''}
                 </div>
             </div>
         `;
@@ -425,6 +439,7 @@ class GDPRManager {
         this.saveConsent(false);
         this.hideConsentBanner();
         this.showDeclinedMessage();
+        this.setChatInputDisabled(true);
 
         // Отправляем вебхук об отказе
         this.sendConsentWebhook(false);
@@ -434,7 +449,50 @@ class GDPRManager {
         this.consentDeclined = false;
         localStorage.removeItem(this.consentKey);
         this.hideDeclinedMessage();
+        this.setChatInputDisabled(false);
         this.showConsentBanner();
+    }
+
+    // Блокировка/разблокировка ввода в чат
+    setChatInputDisabled(disabled) {
+        const inputArea = this.chat.widget?.querySelector('.webchat-input-area');
+        const messageInput = this.chat.widget?.querySelector('.webchat-message-input');
+        const sendBtn = this.chat.widget?.querySelector('.webchat-send-btn');
+        const fileInput = this.chat.widget?.querySelector('.webchat-file-input');
+        const attachBtn = this.chat.widget?.querySelector('.webchat-attach-btn');
+        const voiceBtn = this.chat.widget?.querySelector('.webchat-voice-btn');
+
+        if (disabled) {
+            // Блокируем ввод
+            if (inputArea) {
+                inputArea.classList.add('gdpr-input-disabled');
+                inputArea.style.pointerEvents = 'none';
+                inputArea.style.opacity = '0.5';
+            }
+            if (messageInput) {
+                messageInput.disabled = true;
+                messageInput.placeholder = this.getTexts().inputDisabledPlaceholder || 'Чат недоступен';
+            }
+            if (sendBtn) sendBtn.disabled = true;
+            if (fileInput) fileInput.disabled = true;
+            if (attachBtn) attachBtn.disabled = true;
+            if (voiceBtn) voiceBtn.disabled = true;
+        } else {
+            // Разблокируем ввод
+            if (inputArea) {
+                inputArea.classList.remove('gdpr-input-disabled');
+                inputArea.style.pointerEvents = '';
+                inputArea.style.opacity = '';
+            }
+            if (messageInput) {
+                messageInput.disabled = false;
+                messageInput.placeholder = this.chat.config.appearance?.placeholder || 'Введите сообщение...';
+            }
+            if (sendBtn) sendBtn.disabled = false;
+            if (fileInput) fileInput.disabled = false;
+            if (attachBtn) attachBtn.disabled = false;
+            if (voiceBtn) voiceBtn.disabled = false;
+        }
     }
 
     handlePreChatSubmit(e) {
@@ -1251,6 +1309,7 @@ this.monitoringInterval = null;
                 // Пользователь ранее ЯВНО отклонил - показываем declined message
                 console.log('🔒 [GDPR DEBUG] Показываю declined message (пользователь отклонил)');
                 this.gdprManager.showDeclinedMessage();
+                this.gdprManager.setChatInputDisabled(true);
             } else if (!hasConsent) {
                 // Еще не давал согласие - показываем banner
                 console.log('🔒 [GDPR DEBUG] Показываю consent banner');
