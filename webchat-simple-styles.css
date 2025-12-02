@@ -117,6 +117,13 @@
     line-height: 1.2;
 }
 
+.webchat-header-subtitle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 /* ==============================================
    ИНДИКАТОР СТАТУСА (зеленая/желтая/красная точка)
    ============================================== */
@@ -3580,4 +3587,808 @@
 
 .webchat-branding-container {
     animation: webchat-branding-fadein 0.4s ease-out;
+}
+
+/* ==============================================
+   GDPR COMPLIANCE STYLES
+   ============================================== */
+
+/* GDPR Overlay - полноэкранный оверлей */
+.gdpr-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.gdpr-overlay.gdpr-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* GDPR Consent Banner */
+.gdpr-consent-banner {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 500px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 28px;
+    z-index: 1000001;
+    animation: gdpr-slide-up 0.4s ease-out;
+}
+
+/* Позиционирование баннера */
+.gdpr-consent-banner.gdpr-position-bottom {
+    bottom: 30px;
+    top: auto;
+}
+
+.gdpr-consent-banner.gdpr-position-top {
+    top: 30px;
+    bottom: auto;
+}
+
+.gdpr-consent-banner.gdpr-position-center {
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Заголовок баннера */
+.gdpr-banner-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.gdpr-banner-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.gdpr-banner-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+/* Текст баннера */
+.gdpr-banner-text {
+    font-size: 14px;
+    color: #4b5563;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+/* Ссылки на политики */
+.gdpr-policy-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.gdpr-policy-link {
+    font-size: 13px;
+    color: #667eea;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s ease;
+}
+
+.gdpr-policy-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+/* Кнопки действий */
+.gdpr-banner-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.gdpr-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.gdpr-btn-accept {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.gdpr-btn-accept:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.gdpr-btn-decline {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.gdpr-btn-decline:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* GDPR Pre-Chat Form */
+.gdpr-prechat-form {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 420px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 28px;
+    z-index: 1000001;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: gdpr-fade-in 0.3s ease-out;
+}
+
+.gdpr-prechat-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.gdpr-prechat-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.gdpr-prechat-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 8px 0;
+}
+
+.gdpr-prechat-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Поля формы */
+.gdpr-form-group {
+    margin-bottom: 18px;
+}
+
+.gdpr-form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.gdpr-form-label .gdpr-required {
+    color: #ef4444;
+    margin-left: 2px;
+}
+
+.gdpr-form-input,
+.gdpr-form-textarea,
+.gdpr-form-select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #1f2937;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.gdpr-form-input:focus,
+.gdpr-form-textarea:focus,
+.gdpr-form-select:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.gdpr-form-textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Чекбокс GDPR */
+.gdpr-checkbox-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.gdpr-checkbox {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    accent-color: #667eea;
+}
+
+.gdpr-checkbox-label {
+    font-size: 13px;
+    color: #374151;
+    line-height: 1.5;
+}
+
+.gdpr-checkbox-label a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.gdpr-checkbox-label a:hover {
+    text-decoration: underline;
+}
+
+/* Кнопка отправки формы */
+.gdpr-submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.gdpr-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.gdpr-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* GDPR Declined Message */
+.gdpr-declined-message {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 400px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 32px;
+    text-align: center;
+    z-index: 1000001;
+    animation: gdpr-fade-in 0.3s ease-out;
+}
+
+.gdpr-declined-icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+}
+
+.gdpr-declined-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 12px 0;
+}
+
+.gdpr-declined-text {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.gdpr-reconsider-btn {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.gdpr-reconsider-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* GDPR Privacy Controls (меню в шапке) */
+.gdpr-privacy-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    color: white;
+    font-size: 16px;
+}
+
+.gdpr-privacy-trigger:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.gdpr-privacy-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 280px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    padding: 12px;
+    z-index: 1000002;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+}
+
+.gdpr-privacy-menu.gdpr-menu-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.gdpr-privacy-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    color: #374151;
+    font-size: 13px;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+}
+
+.gdpr-privacy-menu-item:hover {
+    background: #f3f4f6;
+}
+
+.gdpr-privacy-menu-item.gdpr-danger {
+    color: #dc2626;
+}
+
+.gdpr-privacy-menu-item.gdpr-danger:hover {
+    background: #fef2f2;
+}
+
+.gdpr-privacy-menu-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 8px 0;
+}
+
+/* AI Disclosure Badge */
+.gdpr-ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 20px;
+    font-size: 11px;
+    color: #667eea;
+    font-weight: 500;
+}
+
+.gdpr-ai-badge-icon {
+    font-size: 12px;
+}
+
+/* Security Indicator */
+.gdpr-security-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 2px;
+}
+
+.gdpr-security-icon {
+    font-size: 10px;
+}
+
+/* GDPR Notification Toast */
+.gdpr-notification {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 14px 24px;
+    background: #1f2937;
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    font-size: 14px;
+    z-index: 1000010;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.gdpr-notification.gdpr-notification-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.gdpr-notification.gdpr-notification-success {
+    background: #059669;
+}
+
+.gdpr-notification.gdpr-notification-error {
+    background: #dc2626;
+}
+
+.gdpr-notification.gdpr-notification-info {
+    background: #2563eb;
+}
+
+/* Анимации */
+@keyframes gdpr-slide-up {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes gdpr-fade-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Темная тема для GDPR */
+.webchat-theme-dark .gdpr-consent-banner,
+.webchat-theme-dark .gdpr-prechat-form,
+.webchat-theme-dark .gdpr-declined-message {
+    background: #1f2937;
+    border: 1px solid #374151;
+}
+
+.webchat-theme-dark .gdpr-banner-title,
+.webchat-theme-dark .gdpr-prechat-title,
+.webchat-theme-dark .gdpr-declined-title {
+    color: #f9fafb;
+}
+
+.webchat-theme-dark .gdpr-banner-text,
+.webchat-theme-dark .gdpr-prechat-subtitle,
+.webchat-theme-dark .gdpr-declined-text {
+    color: #9ca3af;
+}
+
+.webchat-theme-dark .gdpr-form-label {
+    color: #d1d5db;
+}
+
+.webchat-theme-dark .gdpr-form-input,
+.webchat-theme-dark .gdpr-form-textarea,
+.webchat-theme-dark .gdpr-form-select {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+}
+
+.webchat-theme-dark .gdpr-form-input:focus,
+.webchat-theme-dark .gdpr-form-textarea:focus,
+.webchat-theme-dark .gdpr-form-select:focus {
+    background: #4b5563;
+    border-color: #667eea;
+}
+
+.webchat-theme-dark .gdpr-checkbox-group {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.webchat-theme-dark .gdpr-checkbox-label {
+    color: #d1d5db;
+}
+
+.webchat-theme-dark .gdpr-btn-decline {
+    background: #374151;
+    color: #9ca3af;
+}
+
+.webchat-theme-dark .gdpr-btn-decline:hover {
+    background: #4b5563;
+    color: #f9fafb;
+}
+
+.webchat-theme-dark .gdpr-privacy-menu {
+    background: #1f2937;
+    border: 1px solid #374151;
+}
+
+.webchat-theme-dark .gdpr-privacy-menu-item {
+    color: #d1d5db;
+}
+
+.webchat-theme-dark .gdpr-privacy-menu-item:hover {
+    background: #374151;
+}
+
+.webchat-theme-dark .gdpr-privacy-menu-divider {
+    background: #374151;
+}
+
+/* Мобильные стили для GDPR */
+@media (max-width: 480px) {
+    .gdpr-consent-banner,
+    .gdpr-prechat-form,
+    .gdpr-declined-message {
+        width: 95%;
+        padding: 20px;
+        border-radius: 14px;
+    }
+
+    .gdpr-banner-actions {
+        flex-direction: column;
+    }
+
+    .gdpr-btn {
+        min-width: 100%;
+    }
+
+    .gdpr-privacy-menu {
+        width: 260px;
+        right: -10px;
+    }
+
+    .gdpr-notification {
+        width: 90%;
+        text-align: center;
+    }
+}
+
+/* GDPR Data Modal */
+.gdpr-data-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1000010;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: gdpr-fade-in-simple 0.3s ease;
+}
+
+@keyframes gdpr-fade-in-simple {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.gdpr-data-modal-content {
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    animation: gdpr-modal-scale 0.3s ease;
+}
+
+@keyframes gdpr-modal-scale {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.gdpr-data-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.gdpr-data-modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f3f4f6;
+    border-radius: 8px;
+    font-size: 20px;
+    cursor: pointer;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.gdpr-data-modal-close:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.gdpr-data-modal-body {
+    flex: 1;
+    padding: 20px 24px;
+    overflow-y: auto;
+}
+
+.gdpr-data-modal-body pre {
+    margin: 0;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #374151;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.gdpr-data-modal-footer {
+    display: flex;
+    gap: 12px;
+    padding: 18px 24px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.gdpr-data-modal-footer .gdpr-btn {
+    flex: 1;
+}
+
+/* Privacy Controls in Header */
+.gdpr-privacy-controls {
+    position: relative;
+    margin-left: 8px;
+}
+
+.gdpr-privacy-menu-header {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    padding: 8px 12px;
+}
+
+/* Toast notifications */
+.gdpr-toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 12px 24px;
+    background: #1f2937;
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    font-size: 14px;
+    z-index: 1000020;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.gdpr-toast-show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.gdpr-toast-success {
+    background: #059669;
+}
+
+.gdpr-toast-error {
+    background: #dc2626;
+}
+
+.gdpr-toast-info {
+    background: #2563eb;
+}
+
+/* Dark theme for data modal */
+.webchat-theme-dark .gdpr-data-modal-content {
+    background: #1f2937;
+    border: 1px solid #374151;
+}
+
+.webchat-theme-dark .gdpr-data-modal-header {
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+.webchat-theme-dark .gdpr-data-modal-close {
+    background: #374151;
+    color: #9ca3af;
+}
+
+.webchat-theme-dark .gdpr-data-modal-close:hover {
+    background: #4b5563;
+    color: #f9fafb;
+}
+
+.webchat-theme-dark .gdpr-data-modal-body pre {
+    background: #374151;
+    color: #d1d5db;
+}
+
+.webchat-theme-dark .gdpr-data-modal-footer {
+    border-color: #374151;
 }

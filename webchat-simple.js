@@ -1,4 +1,1004 @@
     // webchat-simple.js - Веб-чат с управляемым переключателем конфигураций
+
+// ===============================================
+// GDPR MANAGER CLASS
+// ===============================================
+class GDPRManager {
+    constructor(chatInstance) {
+        this.chat = chatInstance;
+        this.config = chatInstance.config.gdpr || {};
+        this.storagePrefix = this.config.advanced?.storagePrefix || 'nexusmind_gdpr_';
+        this.consentKey = this.storagePrefix + 'consent';
+        this.userDataKey = this.storagePrefix + 'user_data';
+        this.preChatDataKey = this.storagePrefix + 'prechat_data';
+
+        // Состояние
+        this.consentGiven = false;
+        this.consentDeclined = false;
+        this.preChatCompleted = false;
+        this.userData = {};
+
+        // Проверяем сохраненное согласие при инициализации
+        this.loadConsentState();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // УПРАВЛЕНИЕ СОГЛАСИЕМ
+    // ═══════════════════════════════════════════════════════════
+
+    isEnabled() {
+        return this.config.enabled === true;
+    }
+
+    hasConsent() {
+        return this.consentGiven && !this.isConsentExpired();
+    }
+
+    isConsentExpired() {
+        try {
+            const consentData = localStorage.getItem(this.consentKey);
+            if (!consentData) return true;
+
+            const data = JSON.parse(consentData);
+            const expireDays = this.config.consentBanner?.expireDays || 365;
+            const expiryDate = new Date(data.timestamp);
+            expiryDate.setDate(expiryDate.getDate() + expireDays);
+
+            return new Date() > expiryDate;
+        } catch (e) {
+            return true;
+        }
+    }
+
+    loadConsentState() {
+        try {
+            const consentData = localStorage.getItem(this.consentKey);
+            if (consentData) {
+                const data = JSON.parse(consentData);
+                if (!this.isConsentExpired()) {
+                    this.consentGiven = data.accepted === true;
+                    this.consentDeclined = data.accepted === false;
+                }
+            }
+
+            // Загружаем данные pre-chat формы
+            const preChatData = localStorage.getItem(this.preChatDataKey);
+            if (preChatData) {
+                this.userData = JSON.parse(preChatData);
+                this.preChatCompleted = true;
+            }
+        } catch (e) {
+            console.warn('GDPR: Ошибка загрузки состояния согласия:', e);
+        }
+    }
+
+    saveConsent(accepted) {
+        try {
+            const consentData = {
+                accepted: accepted,
+                timestamp: new Date().toISOString(),
+                privacyPolicyVersion: this.config.privacyPolicyVersion || '1.0',
+                sessionId: this.chat.sessionId,
+                domain: window.location.hostname
+            };
+
+            localStorage.setItem(this.consentKey, JSON.stringify(consentData));
+            this.consentGiven = accepted;
+            this.consentDeclined = !accepted;
+
+            // Отправляем webhook если настроен
+            this.sendConsentWebhook(consentData);
+
+            return true;
+        } catch (e) {
+            console.error('GDPR: Ошибка сохранения согласия:', e);
+            return false;
+        }
+    }
+
+    revokeConsent() {
+        try {
+            // Очищаем все GDPR данные из localStorage
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith(this.storagePrefix)) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+
+            this.consentGiven = false;
+            this.consentDeclined = false;
+            this.preChatCompleted = false;
+            this.userData = {};
+
+            return true;
+        } catch (e) {
+            console.error('GDPR: Ошибка отзыва согласия:', e);
+            return false;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PRE-CHAT ФОРМА
+    // ═══════════════════════════════════════════════════════════
+
+    isPreChatRequired() {
+        return this.config.preChatForm?.enabled === true && !this.preChatCompleted;
+    }
+
+    savePreChatData(data) {
+        try {
+            this.userData = data;
+            this.preChatCompleted = true;
+            localStorage.setItem(this.preChatDataKey, JSON.stringify(data));
+
+            // Отправляем webhook если настроен
+            this.sendPreChatWebhook(data);
+
+            return true;
+        } catch (e) {
+            console.error('GDPR: Ошибка сохранения данных формы:', e);
+            return false;
+        }
+    }
+
+    getUserData() {
+        return this.userData;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // WEBHOOKS
+    // ═══════════════════════════════════════════════════════════
+
+    async sendWebhook(url, data) {
+        if (!url) return null;
+
+        const timeout = this.config.webhooks?.timeout || 10000;
+        const retryAttempts = this.config.webhooks?.retryAttempts || 3;
+        const retryDelay = this.config.webhooks?.retryDelay || 1000;
+
+        for (let attempt = 0; attempt < retryAttempts; attempt++) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    return await response.json();
+                }
+            } catch (e) {
+                if (attempt < retryAttempts - 1) {
+                    await new Promise(resolve => setTimeout(resolve, retryDelay * (attempt + 1)));
+                }
+            }
+        }
+        return null;
+    }
+
+    sendConsentWebhook(consentData) {
+        const webhookUrl = this.config.webhooks?.consent;
+        if (webhookUrl) {
+            this.sendWebhook(webhookUrl, {
+                action: 'consent_given',
+                ...consentData
+            });
+        }
+    }
+
+    sendPreChatWebhook(formData) {
+        const webhookUrl = this.config.webhooks?.preChatForm;
+        if (webhookUrl) {
+            this.sendWebhook(webhookUrl, {
+                action: 'pre_chat_submit',
+                sessionId: this.chat.sessionId,
+                userData: formData,
+                gdprConsent: true,
+                timestamp: new Date().toISOString(),
+                domain: window.location.hostname
+            });
+        }
+    }
+
+    async requestUserData() {
+        const webhookUrl = this.config.webhooks?.dataAccess;
+        if (!webhookUrl) return null;
+
+        return await this.sendWebhook(webhookUrl, {
+            action: 'view_data',
+            sessionId: this.chat.sessionId,
+            userEmail: this.userData.email
+        });
+    }
+
+    async exportUserData() {
+        const webhookUrl = this.config.webhooks?.dataExport;
+        if (!webhookUrl) return null;
+
+        return await this.sendWebhook(webhookUrl, {
+            action: 'export_data',
+            sessionId: this.chat.sessionId,
+            userEmail: this.userData.email,
+            format: this.config.privacyControls?.options?.exportData?.format || 'json'
+        });
+    }
+
+    async deleteUserData() {
+        const webhookUrl = this.config.webhooks?.dataDeletion;
+        if (!webhookUrl) return null;
+
+        const result = await this.sendWebhook(webhookUrl, {
+            action: 'delete_data',
+            sessionId: this.chat.sessionId,
+            userEmail: this.userData.email,
+            confirmDeletion: true
+        });
+
+        if (result) {
+            // Очищаем локальные данные
+            this.revokeConsent();
+        }
+
+        return result;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // РЕНДЕРИНГ UI КОМПОНЕНТОВ
+    // ═══════════════════════════════════════════════════════════
+
+    getTexts() {
+        if (typeof this.chat.config.getTexts === 'function') {
+            return this.chat.config.getTexts().gdpr || {};
+        }
+        return {};
+    }
+
+    renderConsentBanner() {
+        if (!this.isEnabled() || !this.config.consentBanner?.enabled) return '';
+        if (this.hasConsent() || this.consentDeclined) return '';
+
+        const texts = this.getTexts();
+        const position = this.config.consentBanner?.position || 'bottom';
+        const showPrivacyLink = this.config.consentBanner?.showPrivacyLink && this.config.privacyPolicyUrl;
+        const showCookieLink = this.config.consentBanner?.showCookieLink && this.config.cookiePolicyUrl;
+        const showTermsLink = this.config.consentBanner?.showTermsLink && this.config.termsOfServiceUrl;
+        const showDeclineButton = this.config.consentBanner?.showDeclineButton !== false;
+
+        const customText = this.config.consentBanner?.customText;
+        const mainText = customText || texts.consentText || 'We use this chat to process your requests.';
+        const aiText = this.config.aiDisclosure?.enabled ? (texts.consentTextAI || '') : '';
+
+        return `
+            <div class="gdpr-consent-banner gdpr-position-${position}" id="gdprConsentBanner">
+                <div class="gdpr-consent-content">
+                    <div class="gdpr-consent-title">${texts.consentTitle || '🔒 Privacy & Cookies'}</div>
+                    <div class="gdpr-consent-text">
+                        ${mainText}
+                        ${aiText ? `<br><br>${aiText}` : ''}
+                    </div>
+                    <div class="gdpr-consent-links">
+                        ${showPrivacyLink ? `<a href="${this.config.privacyPolicyUrl}" target="_blank" class="gdpr-link">${texts.privacyLinkText || 'Privacy Policy'}</a>` : ''}
+                        ${showCookieLink ? `<a href="${this.config.cookiePolicyUrl}" target="_blank" class="gdpr-link">${texts.cookieLinkText || 'Cookie Policy'}</a>` : ''}
+                        ${showTermsLink ? `<a href="${this.config.termsOfServiceUrl}" target="_blank" class="gdpr-link">${texts.termsLinkText || 'Terms of Service'}</a>` : ''}
+                    </div>
+                    <div class="gdpr-consent-buttons">
+                        <button class="gdpr-btn gdpr-btn-accept" id="gdprAcceptBtn">${texts.acceptButton || 'Accept & Continue'}</button>
+                        ${showDeclineButton ? `<button class="gdpr-btn gdpr-btn-decline" id="gdprDeclineBtn">${texts.declineButton || 'Decline'}</button>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderPreChatForm() {
+        if (!this.isEnabled() || !this.config.preChatForm?.enabled) return '';
+        if (this.preChatCompleted) return '';
+
+        const texts = this.getTexts();
+        const fields = this.config.preChatForm?.fields || [];
+
+        let fieldsHTML = '';
+        fields.forEach(field => {
+            const label = texts[`${field.id}Label`] || field.id;
+            const placeholder = texts[`${field.id}Placeholder`] || '';
+            const requiredMark = field.required ? ' *' : '';
+            const piiIcon = field.isPII ? `<span class="gdpr-pii-icon" title="${texts.piiIndicator || '🔒 Personal data'}">🔒</span>` : '';
+
+            fieldsHTML += `
+                <div class="gdpr-form-field">
+                    <label class="gdpr-field-label">${label}${requiredMark} ${piiIcon}</label>
+                    <input type="${field.type}"
+                           name="${field.id}"
+                           class="gdpr-field-input"
+                           placeholder="${placeholder}"
+                           ${field.required ? 'required' : ''}
+                           ${field.validation?.minLength ? `minlength="${field.validation.minLength}"` : ''}
+                           ${field.validation?.maxLength ? `maxlength="${field.validation.maxLength}"` : ''}
+                           ${field.validation?.pattern ? `pattern="${field.validation.pattern}"` : ''}>
+                </div>
+            `;
+        });
+
+        const gdprCheckboxEnabled = this.config.preChatForm?.gdprCheckbox?.enabled !== false;
+        const gdprCheckboxRequired = this.config.preChatForm?.gdprCheckbox?.required !== false;
+        const linkToPrivacy = this.config.preChatForm?.gdprCheckbox?.linkToPrivacy && this.config.privacyPolicyUrl;
+
+        const checkboxText = texts.gdprCheckboxText || 'I agree to the processing of my personal data';
+        const checkboxHTML = gdprCheckboxEnabled ? `
+            <div class="gdpr-form-field gdpr-checkbox-field">
+                <label class="gdpr-checkbox-label">
+                    <input type="checkbox" id="gdprFormCheckbox" ${gdprCheckboxRequired ? 'required' : ''}>
+                    <span>${checkboxText}</span>
+                    ${linkToPrivacy ? `<a href="${this.config.privacyPolicyUrl}" target="_blank" class="gdpr-link">${texts.privacyLinkText || 'Privacy Policy'}</a>` : ''}
+                </label>
+            </div>
+        ` : '';
+
+        return `
+            <div class="gdpr-prechat-form" id="gdprPreChatForm">
+                <div class="gdpr-form-content">
+                    <div class="gdpr-form-title">${texts.formTitle || 'Start a Conversation'}</div>
+                    <div class="gdpr-form-subtitle">${texts.formSubtitle || 'Please fill out the form before starting the chat'}</div>
+                    <form id="gdprPreChatFormElement">
+                        ${fieldsHTML}
+                        ${checkboxHTML}
+                        <div class="gdpr-form-info">${texts.requiredFieldMark || '* - required field'}</div>
+                        <button type="submit" class="gdpr-btn gdpr-btn-submit">${texts.startChatButton || 'Start Chat'}</button>
+                    </form>
+                </div>
+            </div>
+        `;
+    }
+
+    renderDeclinedMessage() {
+        if (!this.consentDeclined) return '';
+
+        const texts = this.getTexts();
+        return `
+            <div class="gdpr-declined-message" id="gdprDeclinedMessage">
+                <div class="gdpr-declined-content">
+                    <div class="gdpr-declined-icon">🔒</div>
+                    <div class="gdpr-declined-text">${texts.consentRequired || 'Consent is required to use the chat'}</div>
+                    <button class="gdpr-btn gdpr-btn-reconsider" id="gdprReconsiderBtn">${texts.acceptButton || 'Accept & Continue'}</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ОБРАБОТЧИКИ СОБЫТИЙ
+    // ═══════════════════════════════════════════════════════════
+
+    setupEventListeners() {
+        // Кнопка Accept
+        const acceptBtn = document.getElementById('gdprAcceptBtn');
+        if (acceptBtn) {
+            acceptBtn.addEventListener('click', () => this.handleAccept());
+        }
+
+        // Кнопка Decline
+        const declineBtn = document.getElementById('gdprDeclineBtn');
+        if (declineBtn) {
+            declineBtn.addEventListener('click', () => this.handleDecline());
+        }
+
+        // Кнопка Reconsider
+        const reconsiderBtn = document.getElementById('gdprReconsiderBtn');
+        if (reconsiderBtn) {
+            reconsiderBtn.addEventListener('click', () => this.handleReconsider());
+        }
+
+        // Pre-chat форма
+        const preChatForm = document.getElementById('gdprPreChatFormElement');
+        if (preChatForm) {
+            preChatForm.addEventListener('submit', (e) => this.handlePreChatSubmit(e));
+        }
+    }
+
+    handleAccept() {
+        this.saveConsent(true);
+        this.hideConsentBanner();
+
+        // Отправляем вебхук о согласии
+        this.sendConsentWebhook(true);
+
+        // Показываем pre-chat форму если нужно
+        if (this.isPreChatRequired()) {
+            this.showPreChatForm();
+        } else {
+            this.chat.onGDPRComplete();
+        }
+    }
+
+    handleDecline() {
+        this.saveConsent(false);
+        this.hideConsentBanner();
+        this.showDeclinedMessage();
+
+        // Отправляем вебхук об отказе
+        this.sendConsentWebhook(false);
+    }
+
+    handleReconsider() {
+        this.consentDeclined = false;
+        localStorage.removeItem(this.consentKey);
+        this.hideDeclinedMessage();
+        this.showConsentBanner();
+    }
+
+    handlePreChatSubmit(e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = {};
+
+        // Собираем данные формы
+        const fields = this.config.preChatForm?.fields || [];
+        fields.forEach(field => {
+            const input = form.querySelector(`[name="${field.id}"]`);
+            if (input) {
+                formData[field.id] = input.value;
+            }
+        });
+
+        // Проверяем GDPR чекбокс
+        const gdprCheckbox = document.getElementById('gdprFormCheckbox');
+        if (gdprCheckbox && !gdprCheckbox.checked) {
+            const texts = this.getTexts();
+            this.showNotification(texts.formValidationError || 'Please fill in all required fields', 'error');
+            return;
+        }
+
+        // Сохраняем данные
+        this.savePreChatData(formData);
+
+        // Отправляем вебхук с данными формы
+        this.sendPreChatWebhook(formData);
+
+        this.hidePreChatForm();
+        this.chat.onGDPRComplete();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // UI HELPERS
+    // ═══════════════════════════════════════════════════════════
+
+    hideConsentBanner() {
+        const banner = document.getElementById('gdprConsentBanner');
+        if (banner) {
+            banner.classList.add('gdpr-hiding');
+            setTimeout(() => banner.remove(), 300);
+        }
+    }
+
+    showConsentBanner() {
+        const container = this.chat.widget?.querySelector('.webchat-body') || this.chat.widget;
+        if (container) {
+            const existingBanner = document.getElementById('gdprConsentBanner');
+            if (existingBanner) existingBanner.remove();
+
+            container.insertAdjacentHTML('afterbegin', this.renderConsentBanner());
+            this.setupEventListeners();
+        }
+    }
+
+    hidePreChatForm() {
+        const form = document.getElementById('gdprPreChatForm');
+        if (form) {
+            form.classList.add('gdpr-hiding');
+            setTimeout(() => form.remove(), 300);
+        }
+    }
+
+    showPreChatForm() {
+        const container = this.chat.widget?.querySelector('.webchat-body') || this.chat.widget;
+        if (container) {
+            container.insertAdjacentHTML('afterbegin', this.renderPreChatForm());
+            this.setupEventListeners();
+        }
+    }
+
+    hideDeclinedMessage() {
+        const msg = document.getElementById('gdprDeclinedMessage');
+        if (msg) {
+            msg.classList.add('gdpr-hiding');
+            setTimeout(() => msg.remove(), 300);
+        }
+    }
+
+    showDeclinedMessage() {
+        const container = this.chat.widget?.querySelector('.webchat-body') || this.chat.widget;
+        if (container) {
+            container.insertAdjacentHTML('afterbegin', this.renderDeclinedMessage());
+            this.setupEventListeners();
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        // Создаем toast уведомление
+        const toast = document.createElement('div');
+        toast.className = `gdpr-toast gdpr-toast-${type}`;
+        toast.textContent = message;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('gdpr-toast-show');
+        }, 10);
+
+        setTimeout(() => {
+            toast.classList.remove('gdpr-toast-show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ПРОВЕРКА ГОТОВНОСТИ К ЧАТУ
+    // ═══════════════════════════════════════════════════════════
+
+    shouldBlockChat() {
+        if (!this.isEnabled()) return false;
+        if (!this.config.consentBanner?.blockChat) return false;
+
+        return !this.hasConsent();
+    }
+
+    isReadyForChat() {
+        if (!this.isEnabled()) return true;
+
+        // Проверяем согласие
+        if (this.config.consentBanner?.enabled && !this.hasConsent()) {
+            return false;
+        }
+
+        // Проверяем pre-chat форму
+        if (this.config.preChatForm?.enabled && !this.preChatCompleted) {
+            return false;
+        }
+
+        return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PRIVACY CONTROLS MENU
+    // ═══════════════════════════════════════════════════════════
+
+    renderPrivacyControls() {
+        if (!this.isEnabled() || !this.config.privacyControls?.enabled) return '';
+
+        const texts = this.getTexts();
+        const options = this.config.privacyControls?.options || {};
+
+        return `
+            <div class="gdpr-privacy-controls" id="gdprPrivacyControls">
+                <button class="gdpr-privacy-trigger" id="gdprPrivacyTrigger" title="${texts.privacyMenuTitle || 'Privacy Settings'}">
+                    🔒
+                </button>
+                <div class="gdpr-privacy-menu" id="gdprPrivacyMenu">
+                    <div class="gdpr-privacy-menu-header">
+                        ${texts.privacyMenuTitle || 'Privacy Settings'}
+                    </div>
+                    <div class="gdpr-privacy-menu-divider"></div>
+                    ${options.viewData ? `
+                        <button class="gdpr-privacy-menu-item" id="gdprViewData">
+                            <span>📋</span>
+                            <span>${texts.viewDataButton || 'View My Data'}</span>
+                        </button>
+                    ` : ''}
+                    ${options.exportData ? `
+                        <button class="gdpr-privacy-menu-item" id="gdprExportData">
+                            <span>📥</span>
+                            <span>${texts.exportDataButton || 'Export Data'}</span>
+                        </button>
+                    ` : ''}
+                    ${options.deleteHistory ? `
+                        <button class="gdpr-privacy-menu-item" id="gdprDeleteHistory">
+                            <span>🗑️</span>
+                            <span>${texts.deleteHistoryButton || 'Delete Chat History'}</span>
+                        </button>
+                    ` : ''}
+                    ${options.revokeConsent ? `
+                        <div class="gdpr-privacy-menu-divider"></div>
+                        <button class="gdpr-privacy-menu-item gdpr-danger" id="gdprRevokeConsent">
+                            <span>⚠️</span>
+                            <span>${texts.revokeConsentButton || 'Revoke Consent'}</span>
+                        </button>
+                    ` : ''}
+                    ${options.deleteAllData ? `
+                        <button class="gdpr-privacy-menu-item gdpr-danger" id="gdprDeleteAllData">
+                            <span>🗑️</span>
+                            <span>${texts.deleteAllDataButton || 'Delete All My Data'}</span>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    setupPrivacyControlsListeners() {
+        const trigger = document.getElementById('gdprPrivacyTrigger');
+        const menu = document.getElementById('gdprPrivacyMenu');
+
+        if (trigger && menu) {
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('gdpr-menu-open');
+            });
+
+            // Закрытие меню при клике вне его
+            document.addEventListener('click', (e) => {
+                if (!menu.contains(e.target) && !trigger.contains(e.target)) {
+                    menu.classList.remove('gdpr-menu-open');
+                }
+            });
+        }
+
+        // View Data
+        const viewDataBtn = document.getElementById('gdprViewData');
+        if (viewDataBtn) {
+            viewDataBtn.addEventListener('click', () => this.handleViewData());
+        }
+
+        // Export Data
+        const exportDataBtn = document.getElementById('gdprExportData');
+        if (exportDataBtn) {
+            exportDataBtn.addEventListener('click', () => this.handleExportData());
+        }
+
+        // Delete History
+        const deleteHistoryBtn = document.getElementById('gdprDeleteHistory');
+        if (deleteHistoryBtn) {
+            deleteHistoryBtn.addEventListener('click', () => this.handleDeleteHistory());
+        }
+
+        // Revoke Consent
+        const revokeConsentBtn = document.getElementById('gdprRevokeConsent');
+        if (revokeConsentBtn) {
+            revokeConsentBtn.addEventListener('click', () => this.handleRevokeConsent());
+        }
+
+        // Delete All Data
+        const deleteAllDataBtn = document.getElementById('gdprDeleteAllData');
+        if (deleteAllDataBtn) {
+            deleteAllDataBtn.addEventListener('click', () => this.handleDeleteAllData());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // WEBHOOKS
+    // ═══════════════════════════════════════════════════════════
+
+    async sendWebhook(url, data) {
+        if (!url) return null;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    timestamp: new Date().toISOString(),
+                    sessionId: this.chat.sessionId,
+                    userId: this.getUserId(),
+                    ...data
+                })
+            });
+
+            if (!response.ok) {
+                console.warn('GDPR Webhook error:', response.status);
+                return null;
+            }
+
+            return await response.json();
+        } catch (e) {
+            console.warn('GDPR Webhook failed:', e);
+            return null;
+        }
+    }
+
+    getUserId() {
+        // Генерируем или получаем уникальный ID пользователя
+        let userId = localStorage.getItem(this.storagePrefix + 'user_id');
+        if (!userId) {
+            userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem(this.storagePrefix + 'user_id', userId);
+        }
+        return userId;
+    }
+
+    async sendConsentWebhook(accepted) {
+        const webhookUrl = this.config.webhooks?.consent;
+        if (!webhookUrl) return;
+
+        await this.sendWebhook(webhookUrl, {
+            type: 'consent',
+            action: accepted ? 'accepted' : 'declined',
+            privacyPolicyVersion: this.config.privacyPolicyVersion || '1.0',
+            userData: this.userData
+        });
+    }
+
+    async sendPreChatWebhook(formData) {
+        const webhookUrl = this.config.webhooks?.preChatForm;
+        if (!webhookUrl) return;
+
+        await this.sendWebhook(webhookUrl, {
+            type: 'prechat_form',
+            formData: formData
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // DATA OPERATIONS HANDLERS
+    // ═══════════════════════════════════════════════════════════
+
+    async handleViewData() {
+        const texts = this.getTexts();
+        const webhookUrl = this.config.webhooks?.dataAccess;
+
+        this.showNotification(texts.requestingData || 'Requesting your data...', 'info');
+
+        if (webhookUrl) {
+            const result = await this.sendWebhook(webhookUrl, {
+                type: 'data_access',
+                action: 'view'
+            });
+
+            if (result && result.data) {
+                this.showDataModal(result.data);
+            } else {
+                // Показываем локальные данные
+                this.showDataModal(this.getLocalData());
+            }
+        } else {
+            this.showDataModal(this.getLocalData());
+        }
+    }
+
+    async handleExportData() {
+        const texts = this.getTexts();
+        const webhookUrl = this.config.webhooks?.dataExport;
+
+        this.showNotification(texts.exportingData || 'Preparing data export...', 'info');
+
+        let dataToExport = this.getLocalData();
+
+        if (webhookUrl) {
+            const result = await this.sendWebhook(webhookUrl, {
+                type: 'data_export',
+                action: 'export'
+            });
+
+            if (result && result.data) {
+                dataToExport = { ...dataToExport, ...result.data };
+            }
+        }
+
+        // Скачиваем как JSON
+        this.downloadAsJSON(dataToExport, 'my_chat_data.json');
+        this.showNotification(texts.dataExported || 'Data exported successfully', 'success');
+    }
+
+    async handleDeleteHistory() {
+        const texts = this.getTexts();
+
+        if (!confirm(texts.confirmDeleteHistory || 'Are you sure you want to delete your chat history?')) {
+            return;
+        }
+
+        // Удаляем локальную историю
+        this.chat.clearChatHistory();
+
+        const webhookUrl = this.config.webhooks?.dataDelete;
+        if (webhookUrl) {
+            await this.sendWebhook(webhookUrl, {
+                type: 'data_delete',
+                action: 'delete_history'
+            });
+        }
+
+        this.showNotification(texts.historyDeleted || 'Chat history deleted', 'success');
+    }
+
+    async handleRevokeConsent() {
+        const texts = this.getTexts();
+
+        if (!confirm(texts.confirmRevokeConsent || 'Are you sure you want to revoke your consent? This will end your chat session.')) {
+            return;
+        }
+
+        this.revokeConsent();
+
+        const webhookUrl = this.config.webhooks?.consent;
+        if (webhookUrl) {
+            await this.sendWebhook(webhookUrl, {
+                type: 'consent',
+                action: 'revoked'
+            });
+        }
+
+        this.showNotification(texts.consentRevoked || 'Consent revoked', 'info');
+
+        // Показываем consent banner снова
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+    }
+
+    async handleDeleteAllData() {
+        const texts = this.getTexts();
+
+        if (!confirm(texts.confirmDeleteAllData || 'Are you sure you want to delete ALL your data? This action cannot be undone.')) {
+            return;
+        }
+
+        // Удаляем все локальные данные
+        this.deleteAllLocalData();
+
+        const webhookUrl = this.config.webhooks?.dataDelete;
+        if (webhookUrl) {
+            await this.sendWebhook(webhookUrl, {
+                type: 'data_delete',
+                action: 'delete_all'
+            });
+        }
+
+        this.showNotification(texts.allDataDeleted || 'All data deleted', 'success');
+
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // DATA HELPERS
+    // ═══════════════════════════════════════════════════════════
+
+    getLocalData() {
+        return {
+            consent: {
+                given: this.consentGiven,
+                timestamp: localStorage.getItem(this.consentKey) ?
+                    JSON.parse(localStorage.getItem(this.consentKey))?.timestamp : null
+            },
+            userData: this.userData,
+            sessionId: this.chat.sessionId,
+            chatHistory: this.chat.exportChatHistory ? this.chat.exportChatHistory() : []
+        };
+    }
+
+    deleteAllLocalData() {
+        // Удаляем все GDPR-связанные данные
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(this.storagePrefix)) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+
+        // Очищаем историю чата
+        if (this.chat.clearChatHistory) {
+            this.chat.clearChatHistory();
+        }
+    }
+
+    downloadAsJSON(data, filename) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    showDataModal(data) {
+        const texts = this.getTexts();
+
+        // Создаем модальное окно
+        const modal = document.createElement('div');
+        modal.className = 'gdpr-data-modal';
+        modal.innerHTML = `
+            <div class="gdpr-data-modal-content">
+                <div class="gdpr-data-modal-header">
+                    <span>${texts.yourDataTitle || 'Your Data'}</span>
+                    <button class="gdpr-data-modal-close">&times;</button>
+                </div>
+                <div class="gdpr-data-modal-body">
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+                <div class="gdpr-data-modal-footer">
+                    <button class="gdpr-btn gdpr-btn-accept" id="gdprExportFromModal">
+                        ${texts.exportDataButton || 'Export Data'}
+                    </button>
+                    <button class="gdpr-btn gdpr-btn-decline gdpr-close-modal">
+                        ${texts.closeButton || 'Close'}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Обработчики
+        modal.querySelector('.gdpr-data-modal-close').addEventListener('click', () => modal.remove());
+        modal.querySelector('.gdpr-close-modal').addEventListener('click', () => modal.remove());
+        modal.querySelector('#gdprExportFromModal').addEventListener('click', () => {
+            this.downloadAsJSON(data, 'my_chat_data.json');
+        });
+
+        // Закрытие по клику на фон
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // AI DISCLOSURE & SECURITY INDICATORS
+    // ═══════════════════════════════════════════════════════════
+
+    renderAIDisclosure() {
+        if (!this.isEnabled() || !this.config.aiDisclosure?.enabled) return '';
+        if (!this.config.aiDisclosure?.showBadge) return '';
+
+        const texts = this.getTexts();
+        return `
+            <div class="gdpr-ai-badge" title="${texts.aiDisclosureTooltip || 'This chat uses AI technology'}">
+                <span class="gdpr-ai-badge-icon">🤖</span>
+                <span>${texts.aiDisclosureBadge || 'AI Assistant'}</span>
+            </div>
+        `;
+    }
+
+    renderSecurityIndicator() {
+        if (!this.isEnabled() || !this.config.securityIndicators?.showSecureBadge) return '';
+
+        const texts = this.getTexts();
+        const isSecure = window.location.protocol === 'https:';
+
+        if (!isSecure && this.config.advanced?.httpsOnly) return '';
+
+        return `
+            <div class="gdpr-security-indicator" title="${texts.securityTooltip || 'Secure connection'}">
+                <span class="gdpr-security-icon">${isSecure ? '🔒' : '⚠️'}</span>
+                <span>${isSecure ? (texts.secureConnection || 'Secure') : (texts.insecureConnection || 'Not Secure')}</span>
+            </div>
+        `;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // REVOKE CONSENT
+    // ═══════════════════════════════════════════════════════════
+
+    revokeConsent() {
+        localStorage.removeItem(this.consentKey);
+        localStorage.removeItem(this.preChatDataKey);
+        this.consentGiven = false;
+        this.consentDeclined = false;
+        this.preChatCompleted = false;
+        this.userData = {};
+    }
+}
+
+// ===============================================
+// SIMPLE WEB CHAT CLASS
+// ===============================================
 class SimpleWebChat {
     constructor(config = {}) {
     
@@ -168,8 +1168,65 @@ this.monitoringInterval = null;
         }
 
         this.log('info', `🌍 Инициализирован язык: ${this.currentLanguage}`);
-        
+
+        // ✅ НОВОЕ: GDPR Manager для управления согласием и приватностью
+        this.gdprManager = null;
+        this.gdprReady = false;
+
         this.init();
+    }
+
+    // ✅ НОВОЕ: Инициализация GDPR системы
+    initGDPR() {
+        if (!this.config.gdpr?.enabled) {
+            this.gdprReady = true;
+            this.log('info', '🔒 GDPR отключен в настройках');
+            return;
+        }
+
+        this.gdprManager = new GDPRManager(this);
+
+        // Проверяем нужно ли показывать GDPR элементы
+        if (this.gdprManager.shouldBlockChat()) {
+            // Показываем consent banner или declined message
+            if (this.gdprManager.hasConsent() === false) {
+                // Пользователь ранее отклонил - показываем declined message
+                this.gdprManager.renderDeclinedMessage();
+            } else if (!this.gdprManager.hasConsent()) {
+                // Еще не давал согласие - показываем banner
+                this.gdprManager.renderConsentBanner();
+            } else if (this.gdprManager.isPreChatRequired()) {
+                // Согласие есть, но нужна pre-chat форма
+                this.gdprManager.renderPreChatForm();
+            }
+        } else {
+            this.gdprReady = true;
+        }
+
+        this.log('info', '🔒 GDPR Manager инициализирован');
+    }
+
+    // ✅ НОВОЕ: Callback когда GDPR процесс завершен
+    onGDPRComplete() {
+        this.gdprReady = true;
+        this.log('info', '✅ GDPR согласие получено, чат готов к работе');
+
+        // Показываем приветственное сообщение если настроено
+        if (this.config.behavior?.showWelcome !== false) {
+            const welcomeText = this.texts?.welcomeMessage || this.config.texts?.welcomeMessage;
+            if (welcomeText && this.messagesContainer) {
+                // Проверяем что сообщение еще не показано
+                const existingWelcome = this.messagesContainer.querySelector('.webchat-message.bot');
+                if (!existingWelcome) {
+                    this.addMessage(welcomeText, 'bot');
+                }
+            }
+        }
+
+        // Автофокус на поле ввода
+        if (this.messageInput && !this.isMinimized) {
+            setTimeout(() => this.messageInput.focus(), 100);
+        }
     }
     
     // ✅ ПРАВИЛЬНЫЙ МЕТОД: Минимальные fallback тексты (только резерв!)
@@ -1275,6 +2332,15 @@ stopMonitoring() {
         // ✅ НОВОЕ: Настройка обработчиков времени
         this.setupScrollDateHandlers();
         this.updateStatus('connected');
+
+        // ✅ НОВОЕ: Инициализация GDPR системы
+        this.initGDPR();
+
+        // ✅ НОВОЕ: Настройка обработчиков Privacy Controls
+        setTimeout(() => {
+            this.setupGDPRPrivacyControls();
+        }, 100);
+
         // ✅ НОВОЕ: Запуск мониторинга
 this.startMonitoring();
         // ✅ НОВОЕ: Мобильная адаптация
@@ -1401,20 +2467,30 @@ generateWidgetHTML() {
     const languageSwitcherHTML = this.generateLanguageSwitcherHTML();
     const contactsHTML = this.shouldShowContacts() ? this.generateContactsHTML() : '';
     const brandingHTML = this.generateBrandingHTML();
-    
+
+    // ✅ GDPR элементы
+    const gdprPrivacyControlsHTML = this.generateGDPRPrivacyControlsHTML();
+    const gdprAIDisclosureHTML = this.generateGDPRAIDisclosureHTML();
+    const gdprSecurityHTML = this.generateGDPRSecurityHTML();
+
     return `
     <div class="webchat-header">
-        ${this.config.behavior && this.config.behavior.enablePopoutMode ? 
-            `<button class="webchat-popout-btn" onclick="webChat.openInPopout()" title="${this.texts.interface?.popoutTooltip || 'Открыть в отдельном окне'}">⤢</button>` : 
+        ${this.config.behavior && this.config.behavior.enablePopoutMode ?
+            `<button class="webchat-popout-btn" onclick="webChat.openInPopout()" title="${this.texts.interface?.popoutTooltip || 'Открыть в отдельном окне'}">⤢</button>` :
             ''}
         <div class="webchat-status-indicator" id="webchatStatusIndicator"></div>
         <div class="webchat-header-info">
             <div class="webchat-header-title">${this.config.botInfo.avatar} ${this.texts.headerTitle}</div>
-            <div class="webchat-header-subtitle">${this.texts.headerSubtitle}</div>
+            <div class="webchat-header-subtitle-row">
+                <span class="webchat-header-subtitle">${this.texts.headerSubtitle}</span>
+                ${gdprAIDisclosureHTML}
+                ${gdprSecurityHTML}
+            </div>
         </div>
         ${configSelectHTML}
         ${languageSwitcherHTML}
         ${contactsHTML}
+        ${gdprPrivacyControlsHTML}
         <button class="webchat-minimize-btn" onclick="webChat.toggleChat()" title="${this.texts.interface.expand}" aria-label="${this.texts.interface.expand}" aria-expanded="false">+</button>
     </div>
 
@@ -1941,6 +3017,39 @@ const toggleTitle = isCollapsed ?
                 ${textHTML}
             </div>
         `;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // GDPR UI GENERATORS
+    // ═══════════════════════════════════════════════════════════
+
+    generateGDPRPrivacyControlsHTML() {
+        if (!this.gdprManager || !this.config.gdpr?.enabled) return '';
+        if (!this.config.gdpr?.privacyControls?.enabled) return '';
+        if (!this.config.gdpr?.privacyControls?.showInHeader) return '';
+
+        return this.gdprManager.renderPrivacyControls();
+    }
+
+    generateGDPRAIDisclosureHTML() {
+        if (!this.gdprManager || !this.config.gdpr?.enabled) return '';
+        if (!this.config.gdpr?.aiDisclosure?.enabled) return '';
+        if (!this.config.gdpr?.aiDisclosure?.showBadge) return '';
+
+        return this.gdprManager.renderAIDisclosure();
+    }
+
+    generateGDPRSecurityHTML() {
+        if (!this.gdprManager || !this.config.gdpr?.enabled) return '';
+        if (!this.config.gdpr?.securityIndicators?.showSecureBadge) return '';
+
+        return this.gdprManager.renderSecurityIndicator();
+    }
+
+    setupGDPRPrivacyControls() {
+        if (this.gdprManager && this.config.gdpr?.privacyControls?.enabled) {
+            this.gdprManager.setupPrivacyControlsListeners();
+        }
     }
 
     // ✅ УЛУЧШЕННОЕ: Переключение конфигурации с проверкой доступности

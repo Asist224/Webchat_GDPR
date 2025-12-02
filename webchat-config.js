@@ -212,6 +212,11 @@ getTexts() {
         datetime: {
             ...baseTexts.datetime,
             ...(configTexts.datetime || {})
+        },
+        // 🔐 GDPR тексты
+        gdpr: {
+            ...baseTexts.gdpr,
+            ...(configTexts.gdpr || {})
         }
     };
 },
@@ -439,6 +444,96 @@ commands: {
             assistant: "Помощник",
             welcome: "Добро пожаловать!",
             defaultUserName: "Пользователь"
+        },
+
+        // 🔐 GDPR & Конфиденциальность
+        gdpr: {
+            // Consent Banner
+            consentTitle: "🔒 Конфиденциальность и Cookies",
+            consentText: "Мы используем этот чат для обработки ваших запросов. Ваши данные будут обработаны согласно нашей политике конфиденциальности.",
+            consentTextAI: "Вы будете общаться с AI-ассистентом. Ваши сообщения обрабатываются с помощью искусственного интеллекта.",
+            acceptButton: "Принять и продолжить",
+            declineButton: "Отклонить",
+            privacyLinkText: "Политика конфиденциальности",
+            cookieLinkText: "Политика Cookies",
+            termsLinkText: "Условия использования",
+
+            // Pre-Chat Form
+            formTitle: "Начать разговор",
+            formSubtitle: "Пожалуйста, заполните форму перед началом чата",
+            nameLabel: "Ваше имя",
+            namePlaceholder: "Введите ваше имя",
+            emailLabel: "Email",
+            emailPlaceholder: "Введите ваш email",
+            phoneLabel: "Телефон",
+            phonePlaceholder: "Введите номер телефона",
+            companyLabel: "Компания",
+            companyPlaceholder: "Название компании",
+            requiredFieldMark: "* - обязательное поле",
+            gdprCheckboxText: "Я согласен на обработку моих персональных данных",
+            startChatButton: "Начать чат",
+            piiIndicator: "🔒 Персональные данные",
+
+            // AI Disclosure
+            aiDisclosureTitle: "AI Ассистент",
+            aiDisclosureMessage: "🤖 Вы общаетесь с AI-ассистентом. Наш AI разработан для быстрой и эффективной помощи. Хотя мы стремимся к точности, иногда могут быть ошибки.",
+            aiDisclosureBadge: "AI",
+
+            // Privacy Controls Menu
+            privacyMenuTitle: "🔐 Настройки конфиденциальности",
+            viewDataButton: "👁️ Просмотреть мои данные",
+            exportDataButton: "📥 Экспортировать данные",
+            deleteDataButton: "🗑️ Удалить все данные",
+            revokeConsentButton: "⛔ Отозвать согласие",
+            downloadTranscriptButton: "💬 Скачать переписку",
+            clearHistoryButton: "🧹 Очистить историю",
+
+            // Confirmations
+            deleteConfirmTitle: "Удаление данных",
+            deleteConfirmText: "Вы уверены, что хотите удалить все ваши данные? Это действие необратимо.",
+            revokeConfirmTitle: "Отзыв согласия",
+            revokeConfirmText: "После отзыва согласия чат будет недоступен. Вы уверены?",
+            confirmButton: "Да, подтверждаю",
+            cancelButton: "Отмена",
+
+            // Success Messages
+            consentSavedSuccess: "✓ Согласие сохранено",
+            dataDeletedSuccess: "✓ Ваши данные успешно удалены",
+            consentRevokedSuccess: "✓ Согласие отозвано. Чат отключен.",
+            dataExportedSuccess: "✓ Данные экспортированы",
+            historyCleared: "✓ История чата очищена",
+            formSubmittedSuccess: "✓ Форма отправлена",
+
+            // Error Messages
+            consentRequired: "Необходимо согласие для использования чата",
+            formValidationError: "Пожалуйста, заполните все обязательные поля",
+            webhookError: "Ошибка при обработке запроса. Попробуйте позже.",
+            networkError: "Ошибка сети. Проверьте подключение к интернету.",
+            emailRequired: "Email обязателен для этого действия",
+            emailInvalid: "Введите корректный email адрес",
+
+            // Data View Modal
+            dataViewTitle: "Ваши данные",
+            dataViewEmpty: "Нет сохраненных данных",
+            dataViewLoading: "Загрузка данных...",
+            dataViewError: "Не удалось загрузить данные",
+
+            // Security Indicators
+            securedBadge: "Защищено",
+            gdprBadge: "GDPR",
+            encryptedBadge: "Зашифровано",
+            aiBadge: "AI",
+
+            // Data Retention Info
+            retentionInfo: "Ваши данные хранятся в соответствии с нашей политикой конфиденциальности",
+            retentionDaysText: "Срок хранения данных: {days} дней",
+
+            // HTTPS Warning
+            httpsWarning: "⚠️ Для безопасности рекомендуется использовать HTTPS соединение",
+
+            // Processing
+            processingRequest: "Обрабатываем запрос...",
+            pleaseWait: "Пожалуйста, подождите..."
         }
     },
 
@@ -561,6 +656,96 @@ commands: {
             assistant: "Assistant",
             welcome: "Welcome!",
             defaultUserName: "User"
+        },
+
+        // 🔐 GDPR & Privacy
+        gdpr: {
+            // Consent Banner
+            consentTitle: "🔒 Privacy & Cookies",
+            consentText: "We use this chat to process your requests. Your data will be processed according to our privacy policy.",
+            consentTextAI: "You will be chatting with an AI assistant. Your messages are processed using artificial intelligence.",
+            acceptButton: "Accept & Continue",
+            declineButton: "Decline",
+            privacyLinkText: "Privacy Policy",
+            cookieLinkText: "Cookie Policy",
+            termsLinkText: "Terms of Service",
+
+            // Pre-Chat Form
+            formTitle: "Start a Conversation",
+            formSubtitle: "Please fill out the form before starting the chat",
+            nameLabel: "Your Name",
+            namePlaceholder: "Enter your name",
+            emailLabel: "Email",
+            emailPlaceholder: "Enter your email",
+            phoneLabel: "Phone",
+            phonePlaceholder: "Enter your phone number",
+            companyLabel: "Company",
+            companyPlaceholder: "Company name",
+            requiredFieldMark: "* - required field",
+            gdprCheckboxText: "I agree to the processing of my personal data",
+            startChatButton: "Start Chat",
+            piiIndicator: "🔒 Personal data",
+
+            // AI Disclosure
+            aiDisclosureTitle: "AI Assistant",
+            aiDisclosureMessage: "🤖 You are chatting with an AI assistant. Our AI is designed for fast and efficient assistance. While we strive for accuracy, errors may sometimes occur.",
+            aiDisclosureBadge: "AI",
+
+            // Privacy Controls Menu
+            privacyMenuTitle: "🔐 Privacy Settings",
+            viewDataButton: "👁️ View My Data",
+            exportDataButton: "📥 Export Data",
+            deleteDataButton: "🗑️ Delete All Data",
+            revokeConsentButton: "⛔ Revoke Consent",
+            downloadTranscriptButton: "💬 Download Transcript",
+            clearHistoryButton: "🧹 Clear History",
+
+            // Confirmations
+            deleteConfirmTitle: "Delete Data",
+            deleteConfirmText: "Are you sure you want to delete all your data? This action cannot be undone.",
+            revokeConfirmTitle: "Revoke Consent",
+            revokeConfirmText: "After revoking consent, the chat will be unavailable. Are you sure?",
+            confirmButton: "Yes, Confirm",
+            cancelButton: "Cancel",
+
+            // Success Messages
+            consentSavedSuccess: "✓ Consent saved",
+            dataDeletedSuccess: "✓ Your data has been successfully deleted",
+            consentRevokedSuccess: "✓ Consent revoked. Chat disabled.",
+            dataExportedSuccess: "✓ Data exported",
+            historyCleared: "✓ Chat history cleared",
+            formSubmittedSuccess: "✓ Form submitted",
+
+            // Error Messages
+            consentRequired: "Consent is required to use the chat",
+            formValidationError: "Please fill in all required fields",
+            webhookError: "Error processing request. Please try again later.",
+            networkError: "Network error. Please check your internet connection.",
+            emailRequired: "Email is required for this action",
+            emailInvalid: "Please enter a valid email address",
+
+            // Data View Modal
+            dataViewTitle: "Your Data",
+            dataViewEmpty: "No saved data",
+            dataViewLoading: "Loading data...",
+            dataViewError: "Failed to load data",
+
+            // Security Indicators
+            securedBadge: "Secured",
+            gdprBadge: "GDPR",
+            encryptedBadge: "Encrypted",
+            aiBadge: "AI",
+
+            // Data Retention Info
+            retentionInfo: "Your data is stored in accordance with our privacy policy",
+            retentionDaysText: "Data retention period: {days} days",
+
+            // HTTPS Warning
+            httpsWarning: "⚠️ For security, it is recommended to use an HTTPS connection",
+
+            // Processing
+            processingRequest: "Processing request...",
+            pleaseWait: "Please wait..."
         }
     },
 
@@ -678,6 +863,96 @@ commands: {
             assistant: "Asistente",
             welcome: "¡Bienvenido!",
             defaultUserName: "Usuario"
+        },
+
+        // 🔐 GDPR y Privacidad
+        gdpr: {
+            // Consent Banner
+            consentTitle: "🔒 Privacidad y Cookies",
+            consentText: "Utilizamos este chat para procesar sus solicitudes. Sus datos serán procesados de acuerdo con nuestra política de privacidad.",
+            consentTextAI: "Estará chateando con un asistente de IA. Sus mensajes se procesan mediante inteligencia artificial.",
+            acceptButton: "Aceptar y Continuar",
+            declineButton: "Rechazar",
+            privacyLinkText: "Política de Privacidad",
+            cookieLinkText: "Política de Cookies",
+            termsLinkText: "Términos de Servicio",
+
+            // Pre-Chat Form
+            formTitle: "Iniciar Conversación",
+            formSubtitle: "Por favor complete el formulario antes de iniciar el chat",
+            nameLabel: "Su Nombre",
+            namePlaceholder: "Ingrese su nombre",
+            emailLabel: "Correo Electrónico",
+            emailPlaceholder: "Ingrese su correo electrónico",
+            phoneLabel: "Teléfono",
+            phonePlaceholder: "Ingrese su número de teléfono",
+            companyLabel: "Empresa",
+            companyPlaceholder: "Nombre de la empresa",
+            requiredFieldMark: "* - campo obligatorio",
+            gdprCheckboxText: "Acepto el procesamiento de mis datos personales",
+            startChatButton: "Iniciar Chat",
+            piiIndicator: "🔒 Datos personales",
+
+            // AI Disclosure
+            aiDisclosureTitle: "Asistente de IA",
+            aiDisclosureMessage: "🤖 Está chateando con un asistente de IA. Nuestra IA está diseñada para una asistencia rápida y eficiente. Aunque nos esforzamos por la precisión, a veces pueden ocurrir errores.",
+            aiDisclosureBadge: "IA",
+
+            // Privacy Controls Menu
+            privacyMenuTitle: "🔐 Configuración de Privacidad",
+            viewDataButton: "👁️ Ver Mis Datos",
+            exportDataButton: "📥 Exportar Datos",
+            deleteDataButton: "🗑️ Eliminar Todos los Datos",
+            revokeConsentButton: "⛔ Revocar Consentimiento",
+            downloadTranscriptButton: "💬 Descargar Conversación",
+            clearHistoryButton: "🧹 Limpiar Historial",
+
+            // Confirmations
+            deleteConfirmTitle: "Eliminar Datos",
+            deleteConfirmText: "¿Está seguro de que desea eliminar todos sus datos? Esta acción no se puede deshacer.",
+            revokeConfirmTitle: "Revocar Consentimiento",
+            revokeConfirmText: "Después de revocar el consentimiento, el chat no estará disponible. ¿Está seguro?",
+            confirmButton: "Sí, Confirmar",
+            cancelButton: "Cancelar",
+
+            // Success Messages
+            consentSavedSuccess: "✓ Consentimiento guardado",
+            dataDeletedSuccess: "✓ Sus datos han sido eliminados exitosamente",
+            consentRevokedSuccess: "✓ Consentimiento revocado. Chat deshabilitado.",
+            dataExportedSuccess: "✓ Datos exportados",
+            historyCleared: "✓ Historial de chat limpiado",
+            formSubmittedSuccess: "✓ Formulario enviado",
+
+            // Error Messages
+            consentRequired: "Se requiere consentimiento para usar el chat",
+            formValidationError: "Por favor complete todos los campos obligatorios",
+            webhookError: "Error al procesar la solicitud. Por favor intente más tarde.",
+            networkError: "Error de red. Por favor verifique su conexión a internet.",
+            emailRequired: "El correo electrónico es requerido para esta acción",
+            emailInvalid: "Por favor ingrese una dirección de correo electrónico válida",
+
+            // Data View Modal
+            dataViewTitle: "Sus Datos",
+            dataViewEmpty: "No hay datos guardados",
+            dataViewLoading: "Cargando datos...",
+            dataViewError: "No se pudieron cargar los datos",
+
+            // Security Indicators
+            securedBadge: "Seguro",
+            gdprBadge: "GDPR",
+            encryptedBadge: "Cifrado",
+            aiBadge: "IA",
+
+            // Data Retention Info
+            retentionInfo: "Sus datos se almacenan de acuerdo con nuestra política de privacidad",
+            retentionDaysText: "Período de retención de datos: {days} días",
+
+            // HTTPS Warning
+            httpsWarning: "⚠️ Por seguridad, se recomienda usar una conexión HTTPS",
+
+            // Processing
+            processingRequest: "Procesando solicitud...",
+            pleaseWait: "Por favor espere..."
         }
     },
 
@@ -795,6 +1070,96 @@ commands: {
             assistant: "Assistant",
             welcome: "Bienvenue !",
             defaultUserName: "Utilisateur"
+        },
+
+        // 🔐 RGPD et Confidentialité
+        gdpr: {
+            // Consent Banner
+            consentTitle: "🔒 Confidentialité et Cookies",
+            consentText: "Nous utilisons ce chat pour traiter vos demandes. Vos données seront traitées conformément à notre politique de confidentialité.",
+            consentTextAI: "Vous allez discuter avec un assistant IA. Vos messages sont traités par intelligence artificielle.",
+            acceptButton: "Accepter et Continuer",
+            declineButton: "Refuser",
+            privacyLinkText: "Politique de Confidentialité",
+            cookieLinkText: "Politique des Cookies",
+            termsLinkText: "Conditions d'Utilisation",
+
+            // Pre-Chat Form
+            formTitle: "Démarrer une Conversation",
+            formSubtitle: "Veuillez remplir le formulaire avant de commencer le chat",
+            nameLabel: "Votre Nom",
+            namePlaceholder: "Entrez votre nom",
+            emailLabel: "Email",
+            emailPlaceholder: "Entrez votre email",
+            phoneLabel: "Téléphone",
+            phonePlaceholder: "Entrez votre numéro de téléphone",
+            companyLabel: "Entreprise",
+            companyPlaceholder: "Nom de l'entreprise",
+            requiredFieldMark: "* - champ obligatoire",
+            gdprCheckboxText: "J'accepte le traitement de mes données personnelles",
+            startChatButton: "Démarrer le Chat",
+            piiIndicator: "🔒 Données personnelles",
+
+            // AI Disclosure
+            aiDisclosureTitle: "Assistant IA",
+            aiDisclosureMessage: "🤖 Vous discutez avec un assistant IA. Notre IA est conçue pour une assistance rapide et efficace. Bien que nous visions la précision, des erreurs peuvent parfois survenir.",
+            aiDisclosureBadge: "IA",
+
+            // Privacy Controls Menu
+            privacyMenuTitle: "🔐 Paramètres de Confidentialité",
+            viewDataButton: "👁️ Voir Mes Données",
+            exportDataButton: "📥 Exporter les Données",
+            deleteDataButton: "🗑️ Supprimer Toutes les Données",
+            revokeConsentButton: "⛔ Révoquer le Consentement",
+            downloadTranscriptButton: "💬 Télécharger la Conversation",
+            clearHistoryButton: "🧹 Effacer l'Historique",
+
+            // Confirmations
+            deleteConfirmTitle: "Supprimer les Données",
+            deleteConfirmText: "Êtes-vous sûr de vouloir supprimer toutes vos données ? Cette action est irréversible.",
+            revokeConfirmTitle: "Révoquer le Consentement",
+            revokeConfirmText: "Après révocation du consentement, le chat sera indisponible. Êtes-vous sûr ?",
+            confirmButton: "Oui, Confirmer",
+            cancelButton: "Annuler",
+
+            // Success Messages
+            consentSavedSuccess: "✓ Consentement enregistré",
+            dataDeletedSuccess: "✓ Vos données ont été supprimées avec succès",
+            consentRevokedSuccess: "✓ Consentement révoqué. Chat désactivé.",
+            dataExportedSuccess: "✓ Données exportées",
+            historyCleared: "✓ Historique du chat effacé",
+            formSubmittedSuccess: "✓ Formulaire envoyé",
+
+            // Error Messages
+            consentRequired: "Le consentement est requis pour utiliser le chat",
+            formValidationError: "Veuillez remplir tous les champs obligatoires",
+            webhookError: "Erreur lors du traitement de la demande. Veuillez réessayer plus tard.",
+            networkError: "Erreur réseau. Veuillez vérifier votre connexion internet.",
+            emailRequired: "L'email est requis pour cette action",
+            emailInvalid: "Veuillez entrer une adresse email valide",
+
+            // Data View Modal
+            dataViewTitle: "Vos Données",
+            dataViewEmpty: "Aucune donnée enregistrée",
+            dataViewLoading: "Chargement des données...",
+            dataViewError: "Impossible de charger les données",
+
+            // Security Indicators
+            securedBadge: "Sécurisé",
+            gdprBadge: "RGPD",
+            encryptedBadge: "Chiffré",
+            aiBadge: "IA",
+
+            // Data Retention Info
+            retentionInfo: "Vos données sont stockées conformément à notre politique de confidentialité",
+            retentionDaysText: "Période de conservation des données : {days} jours",
+
+            // HTTPS Warning
+            httpsWarning: "⚠️ Pour la sécurité, il est recommandé d'utiliser une connexion HTTPS",
+
+            // Processing
+            processingRequest: "Traitement de la demande...",
+            pleaseWait: "Veuillez patienter..."
         }
     },
 
@@ -912,6 +1277,96 @@ commands: {
             assistant: "Assistent",
             welcome: "Willkommen!",
             defaultUserName: "Benutzer"
+        },
+
+        // 🔐 DSGVO & Datenschutz
+        gdpr: {
+            // Consent Banner
+            consentTitle: "🔒 Datenschutz & Cookies",
+            consentText: "Wir nutzen diesen Chat zur Bearbeitung Ihrer Anfragen. Ihre Daten werden gemäß unserer Datenschutzrichtlinie verarbeitet.",
+            consentTextAI: "Sie werden mit einem KI-Assistenten chatten. Ihre Nachrichten werden mittels künstlicher Intelligenz verarbeitet.",
+            acceptButton: "Akzeptieren & Fortfahren",
+            declineButton: "Ablehnen",
+            privacyLinkText: "Datenschutzrichtlinie",
+            cookieLinkText: "Cookie-Richtlinie",
+            termsLinkText: "Nutzungsbedingungen",
+
+            // Pre-Chat Form
+            formTitle: "Gespräch Starten",
+            formSubtitle: "Bitte füllen Sie das Formular aus, bevor Sie den Chat starten",
+            nameLabel: "Ihr Name",
+            namePlaceholder: "Geben Sie Ihren Namen ein",
+            emailLabel: "E-Mail",
+            emailPlaceholder: "Geben Sie Ihre E-Mail ein",
+            phoneLabel: "Telefon",
+            phonePlaceholder: "Geben Sie Ihre Telefonnummer ein",
+            companyLabel: "Unternehmen",
+            companyPlaceholder: "Unternehmensname",
+            requiredFieldMark: "* - Pflichtfeld",
+            gdprCheckboxText: "Ich stimme der Verarbeitung meiner personenbezogenen Daten zu",
+            startChatButton: "Chat Starten",
+            piiIndicator: "🔒 Personenbezogene Daten",
+
+            // AI Disclosure
+            aiDisclosureTitle: "KI-Assistent",
+            aiDisclosureMessage: "🤖 Sie chatten mit einem KI-Assistenten. Unsere KI wurde für schnelle und effiziente Hilfe entwickelt. Obwohl wir nach Genauigkeit streben, können manchmal Fehler auftreten.",
+            aiDisclosureBadge: "KI",
+
+            // Privacy Controls Menu
+            privacyMenuTitle: "🔐 Datenschutzeinstellungen",
+            viewDataButton: "👁️ Meine Daten Anzeigen",
+            exportDataButton: "📥 Daten Exportieren",
+            deleteDataButton: "🗑️ Alle Daten Löschen",
+            revokeConsentButton: "⛔ Einwilligung Widerrufen",
+            downloadTranscriptButton: "💬 Gespräch Herunterladen",
+            clearHistoryButton: "🧹 Verlauf Löschen",
+
+            // Confirmations
+            deleteConfirmTitle: "Daten Löschen",
+            deleteConfirmText: "Sind Sie sicher, dass Sie alle Ihre Daten löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+            revokeConfirmTitle: "Einwilligung Widerrufen",
+            revokeConfirmText: "Nach dem Widerruf der Einwilligung ist der Chat nicht mehr verfügbar. Sind Sie sicher?",
+            confirmButton: "Ja, Bestätigen",
+            cancelButton: "Abbrechen",
+
+            // Success Messages
+            consentSavedSuccess: "✓ Einwilligung gespeichert",
+            dataDeletedSuccess: "✓ Ihre Daten wurden erfolgreich gelöscht",
+            consentRevokedSuccess: "✓ Einwilligung widerrufen. Chat deaktiviert.",
+            dataExportedSuccess: "✓ Daten exportiert",
+            historyCleared: "✓ Chat-Verlauf gelöscht",
+            formSubmittedSuccess: "✓ Formular gesendet",
+
+            // Error Messages
+            consentRequired: "Für die Nutzung des Chats ist eine Einwilligung erforderlich",
+            formValidationError: "Bitte füllen Sie alle Pflichtfelder aus",
+            webhookError: "Fehler bei der Verarbeitung der Anfrage. Bitte versuchen Sie es später erneut.",
+            networkError: "Netzwerkfehler. Bitte überprüfen Sie Ihre Internetverbindung.",
+            emailRequired: "E-Mail ist für diese Aktion erforderlich",
+            emailInvalid: "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+
+            // Data View Modal
+            dataViewTitle: "Ihre Daten",
+            dataViewEmpty: "Keine gespeicherten Daten",
+            dataViewLoading: "Daten werden geladen...",
+            dataViewError: "Daten konnten nicht geladen werden",
+
+            // Security Indicators
+            securedBadge: "Gesichert",
+            gdprBadge: "DSGVO",
+            encryptedBadge: "Verschlüsselt",
+            aiBadge: "KI",
+
+            // Data Retention Info
+            retentionInfo: "Ihre Daten werden gemäß unserer Datenschutzrichtlinie gespeichert",
+            retentionDaysText: "Datenspeicherungszeitraum: {days} Tage",
+
+            // HTTPS Warning
+            httpsWarning: "⚠️ Aus Sicherheitsgründen wird eine HTTPS-Verbindung empfohlen",
+
+            // Processing
+            processingRequest: "Anfrage wird verarbeitet...",
+            pleaseWait: "Bitte warten..."
         }
     },
 
@@ -1029,6 +1484,96 @@ commands: {
             assistant: "Assistente",
             welcome: "Benvenuto!",
             defaultUserName: "Utente"
+        },
+
+        // 🔐 GDPR e Privacy
+        gdpr: {
+            // Consent Banner
+            consentTitle: "🔒 Privacy e Cookie",
+            consentText: "Utilizziamo questa chat per elaborare le tue richieste. I tuoi dati saranno trattati secondo la nostra politica sulla privacy.",
+            consentTextAI: "Comunicherai con un assistente AI. I tuoi messaggi vengono elaborati tramite intelligenza artificiale.",
+            acceptButton: "Accetta e Continua",
+            declineButton: "Rifiuta",
+            privacyLinkText: "Informativa sulla Privacy",
+            cookieLinkText: "Informativa sui Cookie",
+            termsLinkText: "Termini di Servizio",
+
+            // Pre-Chat Form
+            formTitle: "Inizia una Conversazione",
+            formSubtitle: "Compila il modulo prima di iniziare la chat",
+            nameLabel: "Il Tuo Nome",
+            namePlaceholder: "Inserisci il tuo nome",
+            emailLabel: "Email",
+            emailPlaceholder: "Inserisci la tua email",
+            phoneLabel: "Telefono",
+            phonePlaceholder: "Inserisci il tuo numero di telefono",
+            companyLabel: "Azienda",
+            companyPlaceholder: "Nome dell'azienda",
+            requiredFieldMark: "* - campo obbligatorio",
+            gdprCheckboxText: "Acconsento al trattamento dei miei dati personali",
+            startChatButton: "Inizia Chat",
+            piiIndicator: "🔒 Dati personali",
+
+            // AI Disclosure
+            aiDisclosureTitle: "Assistente AI",
+            aiDisclosureMessage: "🤖 Stai chattando con un assistente AI. La nostra AI è progettata per un'assistenza rapida ed efficiente. Pur mirando alla precisione, possono verificarsi errori.",
+            aiDisclosureBadge: "AI",
+
+            // Privacy Controls Menu
+            privacyMenuTitle: "🔐 Impostazioni Privacy",
+            viewDataButton: "👁️ Visualizza i Miei Dati",
+            exportDataButton: "📥 Esporta Dati",
+            deleteDataButton: "🗑️ Elimina Tutti i Dati",
+            revokeConsentButton: "⛔ Revoca Consenso",
+            downloadTranscriptButton: "💬 Scarica Conversazione",
+            clearHistoryButton: "🧹 Cancella Cronologia",
+
+            // Confirmations
+            deleteConfirmTitle: "Elimina Dati",
+            deleteConfirmText: "Sei sicuro di voler eliminare tutti i tuoi dati? Questa azione non può essere annullata.",
+            revokeConfirmTitle: "Revoca Consenso",
+            revokeConfirmText: "Dopo la revoca del consenso, la chat non sarà disponibile. Sei sicuro?",
+            confirmButton: "Sì, Conferma",
+            cancelButton: "Annulla",
+
+            // Success Messages
+            consentSavedSuccess: "✓ Consenso salvato",
+            dataDeletedSuccess: "✓ I tuoi dati sono stati eliminati con successo",
+            consentRevokedSuccess: "✓ Consenso revocato. Chat disabilitata.",
+            dataExportedSuccess: "✓ Dati esportati",
+            historyCleared: "✓ Cronologia chat cancellata",
+            formSubmittedSuccess: "✓ Modulo inviato",
+
+            // Error Messages
+            consentRequired: "Il consenso è richiesto per utilizzare la chat",
+            formValidationError: "Compila tutti i campi obbligatori",
+            webhookError: "Errore nell'elaborazione della richiesta. Riprova più tardi.",
+            networkError: "Errore di rete. Verifica la tua connessione internet.",
+            emailRequired: "L'email è richiesta per questa azione",
+            emailInvalid: "Inserisci un indirizzo email valido",
+
+            // Data View Modal
+            dataViewTitle: "I Tuoi Dati",
+            dataViewEmpty: "Nessun dato salvato",
+            dataViewLoading: "Caricamento dati...",
+            dataViewError: "Impossibile caricare i dati",
+
+            // Security Indicators
+            securedBadge: "Protetto",
+            gdprBadge: "GDPR",
+            encryptedBadge: "Crittografato",
+            aiBadge: "AI",
+
+            // Data Retention Info
+            retentionInfo: "I tuoi dati sono conservati secondo la nostra politica sulla privacy",
+            retentionDaysText: "Periodo di conservazione dati: {days} giorni",
+
+            // HTTPS Warning
+            httpsWarning: "⚠️ Per sicurezza, si consiglia di utilizzare una connessione HTTPS",
+
+            // Processing
+            processingRequest: "Elaborazione richiesta...",
+            pleaseWait: "Attendere prego..."
         }
     },
 
@@ -1146,6 +1691,96 @@ commands: {
             assistant: "Assistente",
             welcome: "Bem-vindo!",
             defaultUserName: "Usuário"
+        },
+
+        // 🔐 RGPD e Privacidade
+        gdpr: {
+            // Consent Banner
+            consentTitle: "🔒 Privacidade e Cookies",
+            consentText: "Utilizamos este chat para processar suas solicitações. Seus dados serão processados de acordo com nossa política de privacidade.",
+            consentTextAI: "Você conversará com um assistente de IA. Suas mensagens são processadas por inteligência artificial.",
+            acceptButton: "Aceitar e Continuar",
+            declineButton: "Recusar",
+            privacyLinkText: "Política de Privacidade",
+            cookieLinkText: "Política de Cookies",
+            termsLinkText: "Termos de Serviço",
+
+            // Pre-Chat Form
+            formTitle: "Iniciar Conversa",
+            formSubtitle: "Por favor preencha o formulário antes de iniciar o chat",
+            nameLabel: "Seu Nome",
+            namePlaceholder: "Digite seu nome",
+            emailLabel: "Email",
+            emailPlaceholder: "Digite seu email",
+            phoneLabel: "Telefone",
+            phonePlaceholder: "Digite seu número de telefone",
+            companyLabel: "Empresa",
+            companyPlaceholder: "Nome da empresa",
+            requiredFieldMark: "* - campo obrigatório",
+            gdprCheckboxText: "Concordo com o processamento dos meus dados pessoais",
+            startChatButton: "Iniciar Chat",
+            piiIndicator: "🔒 Dados pessoais",
+
+            // AI Disclosure
+            aiDisclosureTitle: "Assistente de IA",
+            aiDisclosureMessage: "🤖 Você está conversando com um assistente de IA. Nossa IA foi projetada para assistência rápida e eficiente. Embora busquemos precisão, erros podem ocorrer.",
+            aiDisclosureBadge: "IA",
+
+            // Privacy Controls Menu
+            privacyMenuTitle: "🔐 Configurações de Privacidade",
+            viewDataButton: "👁️ Ver Meus Dados",
+            exportDataButton: "📥 Exportar Dados",
+            deleteDataButton: "🗑️ Excluir Todos os Dados",
+            revokeConsentButton: "⛔ Revogar Consentimento",
+            downloadTranscriptButton: "💬 Baixar Conversa",
+            clearHistoryButton: "🧹 Limpar Histórico",
+
+            // Confirmations
+            deleteConfirmTitle: "Excluir Dados",
+            deleteConfirmText: "Tem certeza que deseja excluir todos os seus dados? Esta ação não pode ser desfeita.",
+            revokeConfirmTitle: "Revogar Consentimento",
+            revokeConfirmText: "Após revogar o consentimento, o chat ficará indisponível. Tem certeza?",
+            confirmButton: "Sim, Confirmar",
+            cancelButton: "Cancelar",
+
+            // Success Messages
+            consentSavedSuccess: "✓ Consentimento salvo",
+            dataDeletedSuccess: "✓ Seus dados foram excluídos com sucesso",
+            consentRevokedSuccess: "✓ Consentimento revogado. Chat desabilitado.",
+            dataExportedSuccess: "✓ Dados exportados",
+            historyCleared: "✓ Histórico do chat limpo",
+            formSubmittedSuccess: "✓ Formulário enviado",
+
+            // Error Messages
+            consentRequired: "O consentimento é necessário para usar o chat",
+            formValidationError: "Por favor preencha todos os campos obrigatórios",
+            webhookError: "Erro ao processar solicitação. Por favor tente novamente mais tarde.",
+            networkError: "Erro de rede. Por favor verifique sua conexão com a internet.",
+            emailRequired: "Email é obrigatório para esta ação",
+            emailInvalid: "Por favor digite um endereço de email válido",
+
+            // Data View Modal
+            dataViewTitle: "Seus Dados",
+            dataViewEmpty: "Nenhum dado salvo",
+            dataViewLoading: "Carregando dados...",
+            dataViewError: "Não foi possível carregar os dados",
+
+            // Security Indicators
+            securedBadge: "Seguro",
+            gdprBadge: "RGPD",
+            encryptedBadge: "Criptografado",
+            aiBadge: "IA",
+
+            // Data Retention Info
+            retentionInfo: "Seus dados são armazenados de acordo com nossa política de privacidade",
+            retentionDaysText: "Período de retenção de dados: {days} dias",
+
+            // HTTPS Warning
+            httpsWarning: "⚠️ Por segurança, é recomendado usar uma conexão HTTPS",
+
+            // Processing
+            processingRequest: "Processando solicitação...",
+            pleaseWait: "Por favor aguarde..."
         }
     },
 
@@ -1263,6 +1898,96 @@ commands: {
             assistant: "助手",
             welcome: "欢迎！",
             defaultUserName: "用户"
+        },
+
+        // 🔐 GDPR和隐私
+        gdpr: {
+            // Consent Banner
+            consentTitle: "🔒 隐私与Cookie",
+            consentText: "我们使用此聊天处理您的请求。您的数据将根据我们的隐私政策进行处理。",
+            consentTextAI: "您将与AI助手交流。您的消息由人工智能处理。",
+            acceptButton: "接受并继续",
+            declineButton: "拒绝",
+            privacyLinkText: "隐私政策",
+            cookieLinkText: "Cookie政策",
+            termsLinkText: "服务条款",
+
+            // Pre-Chat Form
+            formTitle: "开始对话",
+            formSubtitle: "请在开始聊天前填写表格",
+            nameLabel: "您的姓名",
+            namePlaceholder: "输入您的姓名",
+            emailLabel: "电子邮件",
+            emailPlaceholder: "输入您的电子邮件",
+            phoneLabel: "电话",
+            phonePlaceholder: "输入您的电话号码",
+            companyLabel: "公司",
+            companyPlaceholder: "公司名称",
+            requiredFieldMark: "* - 必填字段",
+            gdprCheckboxText: "我同意处理我的个人数据",
+            startChatButton: "开始聊天",
+            piiIndicator: "🔒 个人数据",
+
+            // AI Disclosure
+            aiDisclosureTitle: "AI助手",
+            aiDisclosureMessage: "🤖 您正在与AI助手交流。我们的AI旨在提供快速高效的帮助。虽然我们力求准确，但有时可能会出现错误。",
+            aiDisclosureBadge: "AI",
+
+            // Privacy Controls Menu
+            privacyMenuTitle: "🔐 隐私设置",
+            viewDataButton: "👁️ 查看我的数据",
+            exportDataButton: "📥 导出数据",
+            deleteDataButton: "🗑️ 删除所有数据",
+            revokeConsentButton: "⛔ 撤销同意",
+            downloadTranscriptButton: "💬 下载对话记录",
+            clearHistoryButton: "🧹 清除历史",
+
+            // Confirmations
+            deleteConfirmTitle: "删除数据",
+            deleteConfirmText: "您确定要删除所有数据吗？此操作无法撤销。",
+            revokeConfirmTitle: "撤销同意",
+            revokeConfirmText: "撤销同意后，聊天将不可用。您确定吗？",
+            confirmButton: "是的，确认",
+            cancelButton: "取消",
+
+            // Success Messages
+            consentSavedSuccess: "✓ 同意已保存",
+            dataDeletedSuccess: "✓ 您的数据已成功删除",
+            consentRevokedSuccess: "✓ 同意已撤销。聊天已禁用。",
+            dataExportedSuccess: "✓ 数据已导出",
+            historyCleared: "✓ 聊天历史已清除",
+            formSubmittedSuccess: "✓ 表格已提交",
+
+            // Error Messages
+            consentRequired: "使用聊天需要同意",
+            formValidationError: "请填写所有必填字段",
+            webhookError: "处理请求时出错。请稍后重试。",
+            networkError: "网络错误。请检查您的网络连接。",
+            emailRequired: "此操作需要电子邮件",
+            emailInvalid: "请输入有效的电子邮件地址",
+
+            // Data View Modal
+            dataViewTitle: "您的数据",
+            dataViewEmpty: "没有保存的数据",
+            dataViewLoading: "正在加载数据...",
+            dataViewError: "无法加载数据",
+
+            // Security Indicators
+            securedBadge: "安全",
+            gdprBadge: "GDPR",
+            encryptedBadge: "已加密",
+            aiBadge: "AI",
+
+            // Data Retention Info
+            retentionInfo: "您的数据按照我们的隐私政策存储",
+            retentionDaysText: "数据保留期：{days}天",
+
+            // HTTPS Warning
+            httpsWarning: "⚠️ 为了安全，建议使用HTTPS连接",
+
+            // Processing
+            processingRequest: "正在处理请求...",
+            pleaseWait: "请稍候..."
         }
     },
 
@@ -1380,6 +2105,96 @@ commands: {
             assistant: "アシスタント",
             welcome: "ようこそ！",
             defaultUserName: "ユーザー"
+        },
+
+        // 🔐 GDPRとプライバシー
+        gdpr: {
+            // Consent Banner
+            consentTitle: "🔒 プライバシーとCookie",
+            consentText: "このチャットを使用してリクエストを処理します。お客様のデータはプライバシーポリシーに従って処理されます。",
+            consentTextAI: "AIアシスタントとチャットします。メッセージは人工知能によって処理されます。",
+            acceptButton: "同意して続行",
+            declineButton: "拒否",
+            privacyLinkText: "プライバシーポリシー",
+            cookieLinkText: "Cookieポリシー",
+            termsLinkText: "利用規約",
+
+            // Pre-Chat Form
+            formTitle: "会話を開始",
+            formSubtitle: "チャットを開始する前にフォームに記入してください",
+            nameLabel: "お名前",
+            namePlaceholder: "お名前を入力",
+            emailLabel: "メールアドレス",
+            emailPlaceholder: "メールアドレスを入力",
+            phoneLabel: "電話番号",
+            phonePlaceholder: "電話番号を入力",
+            companyLabel: "会社名",
+            companyPlaceholder: "会社名",
+            requiredFieldMark: "* - 必須項目",
+            gdprCheckboxText: "個人データの処理に同意します",
+            startChatButton: "チャットを開始",
+            piiIndicator: "🔒 個人データ",
+
+            // AI Disclosure
+            aiDisclosureTitle: "AIアシスタント",
+            aiDisclosureMessage: "🤖 AIアシスタントとチャットしています。当社のAIは迅速で効率的なサポートのために設計されています。正確性を目指していますが、エラーが発生する場合があります。",
+            aiDisclosureBadge: "AI",
+
+            // Privacy Controls Menu
+            privacyMenuTitle: "🔐 プライバシー設定",
+            viewDataButton: "👁️ マイデータを表示",
+            exportDataButton: "📥 データをエクスポート",
+            deleteDataButton: "🗑️ すべてのデータを削除",
+            revokeConsentButton: "⛔ 同意を撤回",
+            downloadTranscriptButton: "💬 会話をダウンロード",
+            clearHistoryButton: "🧹 履歴をクリア",
+
+            // Confirmations
+            deleteConfirmTitle: "データを削除",
+            deleteConfirmText: "すべてのデータを削除してもよろしいですか？この操作は元に戻せません。",
+            revokeConfirmTitle: "同意を撤回",
+            revokeConfirmText: "同意を撤回すると、チャットは利用できなくなります。よろしいですか？",
+            confirmButton: "はい、確認",
+            cancelButton: "キャンセル",
+
+            // Success Messages
+            consentSavedSuccess: "✓ 同意が保存されました",
+            dataDeletedSuccess: "✓ データが正常に削除されました",
+            consentRevokedSuccess: "✓ 同意が撤回されました。チャットは無効です。",
+            dataExportedSuccess: "✓ データがエクスポートされました",
+            historyCleared: "✓ チャット履歴がクリアされました",
+            formSubmittedSuccess: "✓ フォームが送信されました",
+
+            // Error Messages
+            consentRequired: "チャットを使用するには同意が必要です",
+            formValidationError: "すべての必須項目を入力してください",
+            webhookError: "リクエストの処理中にエラーが発生しました。後でもう一度お試しください。",
+            networkError: "ネットワークエラー。インターネット接続を確認してください。",
+            emailRequired: "このアクションにはメールアドレスが必要です",
+            emailInvalid: "有効なメールアドレスを入力してください",
+
+            // Data View Modal
+            dataViewTitle: "お客様のデータ",
+            dataViewEmpty: "保存されているデータはありません",
+            dataViewLoading: "データを読み込み中...",
+            dataViewError: "データを読み込めませんでした",
+
+            // Security Indicators
+            securedBadge: "保護",
+            gdprBadge: "GDPR",
+            encryptedBadge: "暗号化",
+            aiBadge: "AI",
+
+            // Data Retention Info
+            retentionInfo: "お客様のデータはプライバシーポリシーに従って保存されます",
+            retentionDaysText: "データ保持期間：{days}日",
+
+            // HTTPS Warning
+            httpsWarning: "⚠️ セキュリティのため、HTTPS接続の使用をお勧めします",
+
+            // Processing
+            processingRequest: "リクエストを処理中...",
+            pleaseWait: "お待ちください..."
         }
     },
 
@@ -1497,6 +2312,96 @@ commands: {
             assistant: "어시스턴트",
             welcome: "환영합니다!",
             defaultUserName: "사용자"
+        },
+
+        // 🔐 GDPR 및 개인정보 보호
+        gdpr: {
+            // Consent Banner
+            consentTitle: "🔒 개인정보 보호 및 쿠키",
+            consentText: "이 채팅을 통해 귀하의 요청을 처리합니다. 귀하의 데이터는 개인정보 보호정책에 따라 처리됩니다.",
+            consentTextAI: "AI 어시스턴트와 채팅하게 됩니다. 귀하의 메시지는 인공지능으로 처리됩니다.",
+            acceptButton: "동의 및 계속",
+            declineButton: "거부",
+            privacyLinkText: "개인정보 보호정책",
+            cookieLinkText: "쿠키 정책",
+            termsLinkText: "서비스 약관",
+
+            // Pre-Chat Form
+            formTitle: "대화 시작",
+            formSubtitle: "채팅을 시작하기 전에 양식을 작성해 주세요",
+            nameLabel: "이름",
+            namePlaceholder: "이름을 입력하세요",
+            emailLabel: "이메일",
+            emailPlaceholder: "이메일을 입력하세요",
+            phoneLabel: "전화번호",
+            phonePlaceholder: "전화번호를 입력하세요",
+            companyLabel: "회사",
+            companyPlaceholder: "회사명",
+            requiredFieldMark: "* - 필수 항목",
+            gdprCheckboxText: "개인 데이터 처리에 동의합니다",
+            startChatButton: "채팅 시작",
+            piiIndicator: "🔒 개인 데이터",
+
+            // AI Disclosure
+            aiDisclosureTitle: "AI 어시스턴트",
+            aiDisclosureMessage: "🤖 AI 어시스턴트와 채팅 중입니다. 저희 AI는 빠르고 효율적인 지원을 위해 설계되었습니다. 정확성을 위해 노력하지만 때때로 오류가 발생할 수 있습니다.",
+            aiDisclosureBadge: "AI",
+
+            // Privacy Controls Menu
+            privacyMenuTitle: "🔐 개인정보 설정",
+            viewDataButton: "👁️ 내 데이터 보기",
+            exportDataButton: "📥 데이터 내보내기",
+            deleteDataButton: "🗑️ 모든 데이터 삭제",
+            revokeConsentButton: "⛔ 동의 철회",
+            downloadTranscriptButton: "💬 대화 다운로드",
+            clearHistoryButton: "🧹 기록 삭제",
+
+            // Confirmations
+            deleteConfirmTitle: "데이터 삭제",
+            deleteConfirmText: "모든 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+            revokeConfirmTitle: "동의 철회",
+            revokeConfirmText: "동의를 철회하면 채팅을 사용할 수 없습니다. 확실합니까?",
+            confirmButton: "예, 확인",
+            cancelButton: "취소",
+
+            // Success Messages
+            consentSavedSuccess: "✓ 동의가 저장되었습니다",
+            dataDeletedSuccess: "✓ 데이터가 성공적으로 삭제되었습니다",
+            consentRevokedSuccess: "✓ 동의가 철회되었습니다. 채팅이 비활성화되었습니다.",
+            dataExportedSuccess: "✓ 데이터가 내보내졌습니다",
+            historyCleared: "✓ 채팅 기록이 삭제되었습니다",
+            formSubmittedSuccess: "✓ 양식이 제출되었습니다",
+
+            // Error Messages
+            consentRequired: "채팅을 사용하려면 동의가 필요합니다",
+            formValidationError: "모든 필수 항목을 입력해 주세요",
+            webhookError: "요청 처리 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
+            networkError: "네트워크 오류입니다. 인터넷 연결을 확인해 주세요.",
+            emailRequired: "이 작업에는 이메일이 필요합니다",
+            emailInvalid: "유효한 이메일 주소를 입력해 주세요",
+
+            // Data View Modal
+            dataViewTitle: "귀하의 데이터",
+            dataViewEmpty: "저장된 데이터가 없습니다",
+            dataViewLoading: "데이터 로딩 중...",
+            dataViewError: "데이터를 로드할 수 없습니다",
+
+            // Security Indicators
+            securedBadge: "보안",
+            gdprBadge: "GDPR",
+            encryptedBadge: "암호화",
+            aiBadge: "AI",
+
+            // Data Retention Info
+            retentionInfo: "귀하의 데이터는 개인정보 보호정책에 따라 저장됩니다",
+            retentionDaysText: "데이터 보존 기간: {days}일",
+
+            // HTTPS Warning
+            httpsWarning: "⚠️ 보안을 위해 HTTPS 연결 사용을 권장합니다",
+
+            // Processing
+            processingRequest: "요청 처리 중...",
+            pleaseWait: "잠시 기다려 주세요..."
         }
     },
 
@@ -1613,6 +2518,96 @@ commands: {
             assistant: "Помічник",
             welcome: "Ласкаво просимо!",
             defaultUserName: "Користувач"
+        },
+
+        // 🔐 GDPR та Конфіденційність
+        gdpr: {
+            // Consent Banner
+            consentTitle: "🔒 Конфіденційність та Cookies",
+            consentText: "Ми використовуємо цей чат для обробки ваших запитів. Ваші дані будуть оброблені відповідно до нашої політики конфіденційності.",
+            consentTextAI: "Ви будете спілкуватися з AI-асистентом. Ваші повідомлення обробляються за допомогою штучного інтелекту.",
+            acceptButton: "Прийняти та продовжити",
+            declineButton: "Відхилити",
+            privacyLinkText: "Політика конфіденційності",
+            cookieLinkText: "Політика Cookies",
+            termsLinkText: "Умови використання",
+
+            // Pre-Chat Form
+            formTitle: "Почати розмову",
+            formSubtitle: "Будь ласка, заповніть форму перед початком чату",
+            nameLabel: "Ваше ім'я",
+            namePlaceholder: "Введіть ваше ім'я",
+            emailLabel: "Email",
+            emailPlaceholder: "Введіть ваш email",
+            phoneLabel: "Телефон",
+            phonePlaceholder: "Введіть номер телефону",
+            companyLabel: "Компанія",
+            companyPlaceholder: "Назва компанії",
+            requiredFieldMark: "* - обов'язкове поле",
+            gdprCheckboxText: "Я погоджуюсь на обробку моїх персональних даних",
+            startChatButton: "Почати чат",
+            piiIndicator: "🔒 Персональні дані",
+
+            // AI Disclosure
+            aiDisclosureTitle: "AI Асистент",
+            aiDisclosureMessage: "🤖 Ви спілкуєтесь з AI-асистентом. Наш AI розроблений для швидкої та ефективної допомоги. Хоча ми прагнемо до точності, іноді можуть бути помилки.",
+            aiDisclosureBadge: "AI",
+
+            // Privacy Controls Menu
+            privacyMenuTitle: "🔐 Налаштування конфіденційності",
+            viewDataButton: "👁️ Переглянути мої дані",
+            exportDataButton: "📥 Експортувати дані",
+            deleteDataButton: "🗑️ Видалити всі дані",
+            revokeConsentButton: "⛔ Відкликати згоду",
+            downloadTranscriptButton: "💬 Завантажити переписку",
+            clearHistoryButton: "🧹 Очистити історію",
+
+            // Confirmations
+            deleteConfirmTitle: "Видалення даних",
+            deleteConfirmText: "Ви впевнені, що хочете видалити всі ваші дані? Ця дія незворотна.",
+            revokeConfirmTitle: "Відкликання згоди",
+            revokeConfirmText: "Після відкликання згоди чат буде недоступний. Ви впевнені?",
+            confirmButton: "Так, підтверджую",
+            cancelButton: "Скасувати",
+
+            // Success Messages
+            consentSavedSuccess: "✓ Згоду збережено",
+            dataDeletedSuccess: "✓ Ваші дані успішно видалено",
+            consentRevokedSuccess: "✓ Згоду відкликано. Чат вимкнено.",
+            dataExportedSuccess: "✓ Дані експортовано",
+            historyCleared: "✓ Історію чату очищено",
+            formSubmittedSuccess: "✓ Форму надіслано",
+
+            // Error Messages
+            consentRequired: "Необхідна згода для використання чату",
+            formValidationError: "Будь ласка, заповніть всі обов'язкові поля",
+            webhookError: "Помилка при обробці запиту. Спробуйте пізніше.",
+            networkError: "Помилка мережі. Перевірте підключення до інтернету.",
+            emailRequired: "Email обов'язковий для цієї дії",
+            emailInvalid: "Введіть коректну email адресу",
+
+            // Data View Modal
+            dataViewTitle: "Ваші дані",
+            dataViewEmpty: "Немає збережених даних",
+            dataViewLoading: "Завантаження даних...",
+            dataViewError: "Не вдалося завантажити дані",
+
+            // Security Indicators
+            securedBadge: "Захищено",
+            gdprBadge: "GDPR",
+            encryptedBadge: "Зашифровано",
+            aiBadge: "AI",
+
+            // Data Retention Info
+            retentionInfo: "Ваші дані зберігаються відповідно до нашої політики конфіденційності",
+            retentionDaysText: "Термін зберігання даних: {days} днів",
+
+            // HTTPS Warning
+            httpsWarning: "⚠️ Для безпеки рекомендується використовувати HTTPS з'єднання",
+
+            // Processing
+            processingRequest: "Обробляємо запит...",
+            pleaseWait: "Будь ласка, зачекайте..."
         }
     }
 };
@@ -1848,6 +2843,231 @@ const baseConfig = {
             logoWidth: 16,
             logoHeight: 15,
             fontSize: 10
+        }
+    },
+    // ===============================================
+    // GDPR & КОНФИДЕНЦИАЛЬНОСТЬ
+    // ===============================================
+    gdpr: {
+        // ═══════════════════════════════════════════════════════════
+        // ОСНОВНЫЕ НАСТРОЙКИ
+        // ═══════════════════════════════════════════════════════════
+        enabled: true,                         // Мастер-переключатель GDPR
+        mode: 'strict',                        // 'strict' | 'balanced' | 'minimal'
+
+        // Ссылки на политики (настраивает клиент)
+        privacyPolicyUrl: '',                  // ОБЯЗАТЕЛЬНО заполнить клиенту
+        privacyPolicyVersion: '1.0',
+        termsOfServiceUrl: '',                 // Опционально
+        cookiePolicyUrl: '',                   // Опционально
+
+        // ═══════════════════════════════════════════════════════════
+        // 1. БАННЕР СОГЛАСИЯ
+        // ═══════════════════════════════════════════════════════════
+        consentBanner: {
+            enabled: true,
+            blockChat: true,                     // Блокировать чат до согласия
+            position: 'bottom',                  // 'bottom' | 'center' | 'top'
+            expireDays: 365,                     // Срок хранения согласия
+            showDeclineButton: true,             // Показывать кнопку "Отклонить"
+            showPrivacyLink: true,
+            showCookieLink: false,
+            showTermsLink: false,
+            customText: null,                    // Переопределение текста (null = из переводов)
+            animation: 'slide'                   // 'slide' | 'fade' | 'none'
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 2. ФОРМА ПЕРЕД ЧАТОМ (по умолчанию ВЫКЛЮЧЕНА)
+        // ═══════════════════════════════════════════════════════════
+        preChatForm: {
+            enabled: false,                      // По умолчанию выключена
+            showAfterConsent: true,              // Показывать после баннера согласия
+
+            // Настраиваемые поля
+            fields: [
+                {
+                    id: 'name',
+                    type: 'text',
+                    required: true,
+                    isPII: true,                     // Персональные данные (показывать 🔒)
+                    validation: {
+                        minLength: 2,
+                        maxLength: 100
+                    }
+                },
+                {
+                    id: 'email',
+                    type: 'email',
+                    required: true,
+                    isPII: true,
+                    validation: {
+                        pattern: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'
+                    }
+                },
+                {
+                    id: 'phone',
+                    type: 'tel',
+                    required: false,
+                    isPII: true
+                },
+                {
+                    id: 'company',
+                    type: 'text',
+                    required: false,
+                    isPII: false
+                }
+            ],
+
+            // GDPR чекбокс (обязательный для GDPR)
+            gdprCheckbox: {
+                enabled: true,
+                required: true,
+                linkToPrivacy: true
+            },
+
+            // Webhook для отправки данных формы
+            submitToWebhook: true
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 3. AI DISCLOSURE (раскрытие информации об ИИ)
+        // ═══════════════════════════════════════════════════════════
+        aiDisclosure: {
+            enabled: true,
+            showBadge: true,                     // 🤖 в header
+            badgePosition: 'header',             // 'header' | 'footer'
+            showSystemMessage: true,             // Сообщение при старте чата
+            customMessage: null                  // Переопределение (null = из переводов)
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 4. МЕНЮ КОНФИДЕНЦИАЛЬНОСТИ
+        // ═══════════════════════════════════════════════════════════
+        privacyControls: {
+            enabled: true,
+            showInHeader: true,                  // Иконка ⚙️ в шапке
+
+            options: {
+                viewData: {
+                    enabled: true,
+                    requiresEmail: true              // Требует email для идентификации
+                },
+                exportData: {
+                    enabled: true,
+                    format: 'json',                  // 'json' | 'csv' | 'pdf'
+                    requiresEmail: true
+                },
+                deleteData: {
+                    enabled: true,
+                    requireConfirmation: true,       // Показывать подтверждение
+                    confirmationDelay: 3000          // Задержка перед удалением (мс)
+                },
+                revokeConsent: {
+                    enabled: true,
+                    requireConfirmation: true,
+                    clearLocalData: true             // Очистить localStorage
+                },
+                downloadTranscript: {
+                    enabled: true,
+                    format: 'txt'                    // 'txt' | 'json' | 'pdf'
+                },
+                clearHistory: {
+                    enabled: true
+                }
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 5. МИНИМИЗАЦИЯ ДАННЫХ
+        // ═══════════════════════════════════════════════════════════
+        dataMinimization: {
+            collectIP: false,                    // По умолчанию НЕ собираем
+            collectUserAgent: false,
+            collectGeolocation: false,
+            collectReferrer: false,
+            collectScreenResolution: false
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 6. УПРАВЛЕНИЕ COOKIES
+        // ═══════════════════════════════════════════════════════════
+        cookieManagement: {
+            // Essential cookies (без согласия)
+            essential: {
+                sessionId: true,
+                consentStatus: true,
+                language: true,
+                theme: true
+            },
+
+            // Optional cookies (требуют согласия)
+            analytics: {
+                enabled: false,
+                requireConsent: true
+            },
+            marketing: {
+                enabled: false,
+                requireConsent: true
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 7. ИСТОРИЯ ЧАТА
+        // ═══════════════════════════════════════════════════════════
+        chatHistory: {
+            saveLocally: true,                   // Сохранять в localStorage
+            encryptLocal: true,                  // Шифрование (AES)
+            localRetentionDays: 30,              // Автоудаление из браузера
+            allowDownload: true,
+            allowClear: true
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 8. RETENTION ПОЛИТИКА (информационная)
+        // ═══════════════════════════════════════════════════════════
+        dataRetention: {
+            showInfo: true,                      // Показывать информацию о сроках
+            infoText: null,                      // Кастомный текст (null = из переводов)
+            retentionDays: 365,                  // Информация для пользователя
+            anonymizeDays: 90
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 9. ИНДИКАТОРЫ БЕЗОПАСНОСТИ
+        // ═══════════════════════════════════════════════════════════
+        securityIndicators: {
+            showSecureBadge: true,               // 🔒 в header
+            showGDPRBadge: true,                 // ✓ GDPR в footer
+            showEncryptionInfo: true,
+            showAIBadge: true,                   // 🤖 badge
+            customBadgeText: null                // Кастомный текст
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 10. WEBHOOKS
+        // ═══════════════════════════════════════════════════════════
+        webhooks: {
+            // URL-ы для интеграции с backend (настраивает клиент)
+            consent: '',                         // POST: логирование согласия
+            preChatForm: '',                     // POST: данные формы
+            dataAccess: '',                      // POST: запрос данных пользователя
+            dataExport: '',                      // POST: экспорт данных
+            dataDeletion: '',                    // POST: удаление данных
+
+            // Настройки запросов
+            timeout: 10000,                      // Timeout в мс
+            retryAttempts: 3,                    // Количество повторов
+            retryDelay: 1000                     // Задержка между повторами
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 11. РАСШИРЕННЫЕ НАСТРОЙКИ
+        // ═══════════════════════════════════════════════════════════
+        advanced: {
+            httpsOnly: true,                     // Предупреждать если не HTTPS
+            debugMode: false,                    // Логирование GDPR операций
+            storagePrefix: 'nexusmind_gdpr_'     // Префикс для localStorage ключей
         }
     }
 };

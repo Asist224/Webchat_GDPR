@@ -1,224 +1,1004 @@
-// webchat-simple.js - Веб-чат с управляемым переключателем конфигураций и защитой лицензии
+    // webchat-simple.js - Веб-чат с управляемым переключателем конфигураций
 
-// ============================================
-// КОНФИГУРАЦИЯ WORKER
-// ============================================
-const WORKER_URL = 'https://webchat.evgenstrizh.workers.dev';
+// ===============================================
+// GDPR MANAGER CLASS
+// ===============================================
+class GDPRManager {
+    constructor(chatInstance) {
+        this.chat = chatInstance;
+        this.config = chatInstance.config.gdpr || {};
+        this.storagePrefix = this.config.advanced?.storagePrefix || 'nexusmind_gdpr_';
+        this.consentKey = this.storagePrefix + 'consent';
+        this.userDataKey = this.storagePrefix + 'user_data';
+        this.preChatDataKey = this.storagePrefix + 'prechat_data';
 
-// ============================================
-// LICENSE VERIFICATION (БЛОКИРУЮЩАЯ)
-// ============================================
-let LICENSE_CHECK_PROMISE = null;
+        // Состояние
+        this.consentGiven = false;
+        this.consentDeclined = false;
+        this.preChatCompleted = false;
+        this.userData = {};
 
-(async function() {
-    // ✅ ИСПРАВЛЕНИЕ: Сначала проверяем, не передана ли лицензия из родительского окна
-    if (window.WEBCHAT_LICENSE && window.WEBCHAT_LICENSE.valid && window.WEBCHAT_LICENSE.token) {
-        console.log('✅ Лицензия получена из родительского окна (popout mode)');
-        return; // Лицензия уже есть, проверка не нужна
+        // Проверяем сохраненное согласие при инициализации
+        this.loadConsentState();
     }
 
-    const scriptTag = document.currentScript || document.querySelector('script[src*="webchat"]');
-    const LICENSE_KEY = scriptTag ? scriptTag.getAttribute('data-license') : null;
+    // ═══════════════════════════════════════════════════════════
+    // УПРАВЛЕНИЕ СОГЛАСИЕМ
+    // ═══════════════════════════════════════════════════════════
 
-    if (!LICENSE_KEY) {
-        console.error('❌ License key not provided');
-        showLicenseError('License key is required', 'Add data-license="YOUR_KEY" to script tag');
-        return;
+    isEnabled() {
+        return this.config.enabled === true;
     }
 
-    console.log('🔐 Verifying webchat license...');
+    hasConsent() {
+        return this.consentGiven && !this.isConsentExpired();
+    }
 
-    try {
-        const response = await fetch(`${WORKER_URL}/api/verify-license`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                license_key: LICENSE_KEY,
-                domain: window.location.hostname
-            })
-        });
+    isConsentExpired() {
+        try {
+            const consentData = localStorage.getItem(this.consentKey);
+            if (!consentData) return true;
 
-        const result = await response.json();
+            const data = JSON.parse(consentData);
+            const expireDays = this.config.consentBanner?.expireDays || 365;
+            const expiryDate = new Date(data.timestamp);
+            expiryDate.setDate(expiryDate.getDate() + expireDays);
 
-        if (!result.valid) {
-            console.error('❌ License validation failed:', result.error);
-            showLicenseError(result.error || 'Invalid license', 'Contact support');
-            return;
+            return new Date() > expiryDate;
+        } catch (e) {
+            return true;
         }
+    }
 
-        console.log('✅ License verified');
+    loadConsentState() {
+        try {
+            const consentData = localStorage.getItem(this.consentKey);
+            if (consentData) {
+                const data = JSON.parse(consentData);
+                if (!this.isConsentExpired()) {
+                    this.consentGiven = data.accepted === true;
+                    this.consentDeclined = data.accepted === false;
+                }
+            }
 
-        // Сохраняем токен ГЛОБАЛЬНО (и license_key для popout)
-        window.WEBCHAT_LICENSE = {
-            valid: true,
-            token: result.token,
-            token_expires_at: Date.now() + (result.expires_in * 1000),
-            client_id: result.client_id,
-            license_key: LICENSE_KEY, // ✅ Сохраняем ключ для popout окон
-            domain: window.location.hostname
-        };
+            // Загружаем данные pre-chat формы
+            const preChatData = localStorage.getItem(this.preChatDataKey);
+            if (preChatData) {
+                this.userData = JSON.parse(preChatData);
+                this.preChatCompleted = true;
+            }
+        } catch (e) {
+            console.warn('GDPR: Ошибка загрузки состояния согласия:', e);
+        }
+    }
 
-        // Перепроверка каждые 30 минут
-        setInterval(async () => {
+    saveConsent(accepted) {
+        try {
+            const consentData = {
+                accepted: accepted,
+                timestamp: new Date().toISOString(),
+                privacyPolicyVersion: this.config.privacyPolicyVersion || '1.0',
+                sessionId: this.chat.sessionId,
+                domain: window.location.hostname
+            };
+
+            localStorage.setItem(this.consentKey, JSON.stringify(consentData));
+            this.consentGiven = accepted;
+            this.consentDeclined = !accepted;
+
+            // Отправляем webhook если настроен
+            this.sendConsentWebhook(consentData);
+
+            return true;
+        } catch (e) {
+            console.error('GDPR: Ошибка сохранения согласия:', e);
+            return false;
+        }
+    }
+
+    revokeConsent() {
+        try {
+            // Очищаем все GDPR данные из localStorage
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith(this.storagePrefix)) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+
+            this.consentGiven = false;
+            this.consentDeclined = false;
+            this.preChatCompleted = false;
+            this.userData = {};
+
+            return true;
+        } catch (e) {
+            console.error('GDPR: Ошибка отзыва согласия:', e);
+            return false;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PRE-CHAT ФОРМА
+    // ═══════════════════════════════════════════════════════════
+
+    isPreChatRequired() {
+        return this.config.preChatForm?.enabled === true && !this.preChatCompleted;
+    }
+
+    savePreChatData(data) {
+        try {
+            this.userData = data;
+            this.preChatCompleted = true;
+            localStorage.setItem(this.preChatDataKey, JSON.stringify(data));
+
+            // Отправляем webhook если настроен
+            this.sendPreChatWebhook(data);
+
+            return true;
+        } catch (e) {
+            console.error('GDPR: Ошибка сохранения данных формы:', e);
+            return false;
+        }
+    }
+
+    getUserData() {
+        return this.userData;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // WEBHOOKS
+    // ═══════════════════════════════════════════════════════════
+
+    async sendWebhook(url, data) {
+        if (!url) return null;
+
+        const timeout = this.config.webhooks?.timeout || 10000;
+        const retryAttempts = this.config.webhooks?.retryAttempts || 3;
+        const retryDelay = this.config.webhooks?.retryDelay || 1000;
+
+        for (let attempt = 0; attempt < retryAttempts; attempt++) {
             try {
-                const resp = await fetch(`${WORKER_URL}/api/verify-license`, {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+                const response = await fetch(url, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        license_key: LICENSE_KEY,
-                        domain: window.location.hostname
-                    })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data),
+                    signal: controller.signal
                 });
 
-                const res = await resp.json();
+                clearTimeout(timeoutId);
 
-                if (res.valid) {
-                    window.WEBCHAT_LICENSE.token = res.token;
-                    window.WEBCHAT_LICENSE.token_expires_at = Date.now() + (res.expires_in * 1000);
-                    console.log('✅ License revalidated');
-                } else {
-                    showLicenseError('License Expired', 'Your license is no longer valid');
+                if (response.ok) {
+                    return await response.json();
                 }
-            } catch (err) {
-                console.error('⚠️ License revalidation failed:', err);
-            }
-        }, 30 * 60 * 1000);
-
-    } catch (error) {
-        console.error('💥 License check error:', error);
-        showLicenseError('Connection Error', 'Unable to verify license');
-        return;
-    }
-})();
-
-// Показ ошибки лицензии
-function showLicenseError(title, message) {
-    const existingError = document.getElementById('webchat-license-error');
-    if (existingError) {
-        existingError.remove();
-    }
-
-    const errorContainer = document.createElement('div');
-    errorContainer.id = 'webchat-license-error';
-    errorContainer.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 999999;
-        width: 360px;
-        max-width: calc(100vw - 40px);
-        animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    `;
-
-    errorContainer.innerHTML = `
-        <div style="
-            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
-            color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(255, 68, 68, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-        ">
-            <div style="display: flex; align-items: flex-start; gap: 16px;">
-                <div style="font-size: 32px; line-height: 1; flex-shrink: 0;">⚠️</div>
-                <div style="flex: 1; min-width: 0;">
-                    <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; line-height: 1.3;">
-                        ${title}
-                    </h3>
-                    <p style="margin: 0; font-size: 14px; opacity: 0.95; line-height: 1.5;">
-                        ${message}
-                    </p>
-                </div>
-            </div>
-            <div style="
-                margin-top: 16px;
-                padding-top: 16px;
-                border-top: 1px solid rgba(255,255,255,0.2);
-                font-size: 11px;
-                opacity: 0.8;
-                text-align: center;
-            ">
-                Webchat License Error
-            </div>
-        </div>
-
-        <style>
-            @keyframes slideInUp {
-                from {
-                    transform: translateY(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateY(0);
-                    opacity: 1;
+            } catch (e) {
+                if (attempt < retryAttempts - 1) {
+                    await new Promise(resolve => setTimeout(resolve, retryDelay * (attempt + 1)));
                 }
             }
-
-            @media (max-width: 480px) {
-                #webchat-license-error {
-                    bottom: 10px !important;
-                    right: 10px !important;
-                    left: 10px !important;
-                    width: auto !important;
-                }
-            }
-        </style>
-    `;
-
-    document.body.appendChild(errorContainer);
-    console.error(`🚫 Webchat License Error: ${title} - ${message}`);
-}
-
-// Получение headers с токеном
-function getAuthHeaders() {
-    if (!window.WEBCHAT_LICENSE || !window.WEBCHAT_LICENSE.token) {
-        throw new Error('No valid license token');
+        }
+        return null;
     }
 
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${window.WEBCHAT_LICENSE.token}`
-    };
-}
-
-// Вызов функций Worker с ожиданием лицензии
-async function callWorker(endpoint, data) {
-    // Ждем пока лицензия проверится (максимум 10 секунд)
-    let attempts = 0;
-    while (!window.WEBCHAT_LICENSE && attempts < 100) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        attempts++;
+    sendConsentWebhook(consentData) {
+        const webhookUrl = this.config.webhooks?.consent;
+        if (webhookUrl) {
+            this.sendWebhook(webhookUrl, {
+                action: 'consent_given',
+                ...consentData
+            });
+        }
     }
 
-    if (!window.WEBCHAT_LICENSE) {
-        throw new Error('License verification timeout');
+    sendPreChatWebhook(formData) {
+        const webhookUrl = this.config.webhooks?.preChatForm;
+        if (webhookUrl) {
+            this.sendWebhook(webhookUrl, {
+                action: 'pre_chat_submit',
+                sessionId: this.chat.sessionId,
+                userData: formData,
+                gdprConsent: true,
+                timestamp: new Date().toISOString(),
+                domain: window.location.hostname
+            });
+        }
     }
 
-    try {
-        const response = await fetch(`${WORKER_URL}/api/${endpoint}`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify(data)
+    async requestUserData() {
+        const webhookUrl = this.config.webhooks?.dataAccess;
+        if (!webhookUrl) return null;
+
+        return await this.sendWebhook(webhookUrl, {
+            action: 'view_data',
+            sessionId: this.chat.sessionId,
+            userEmail: this.userData.email
+        });
+    }
+
+    async exportUserData() {
+        const webhookUrl = this.config.webhooks?.dataExport;
+        if (!webhookUrl) return null;
+
+        return await this.sendWebhook(webhookUrl, {
+            action: 'export_data',
+            sessionId: this.chat.sessionId,
+            userEmail: this.userData.email,
+            format: this.config.privacyControls?.options?.exportData?.format || 'json'
+        });
+    }
+
+    async deleteUserData() {
+        const webhookUrl = this.config.webhooks?.dataDeletion;
+        if (!webhookUrl) return null;
+
+        const result = await this.sendWebhook(webhookUrl, {
+            action: 'delete_data',
+            sessionId: this.chat.sessionId,
+            userEmail: this.userData.email,
+            confirmDeletion: true
         });
 
-        const result = await response.json();
-
-        if (!result.success) {
-            throw new Error(result.error || 'Worker call failed');
+        if (result) {
+            // Очищаем локальные данные
+            this.revokeConsent();
         }
 
         return result;
-    } catch (error) {
-        console.error(`❌ Worker call failed (${endpoint}):`, error);
-        throw error;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // РЕНДЕРИНГ UI КОМПОНЕНТОВ
+    // ═══════════════════════════════════════════════════════════
+
+    getTexts() {
+        if (typeof this.chat.config.getTexts === 'function') {
+            return this.chat.config.getTexts().gdpr || {};
+        }
+        return {};
+    }
+
+    renderConsentBanner() {
+        if (!this.isEnabled() || !this.config.consentBanner?.enabled) return '';
+        if (this.hasConsent() || this.consentDeclined) return '';
+
+        const texts = this.getTexts();
+        const position = this.config.consentBanner?.position || 'bottom';
+        const showPrivacyLink = this.config.consentBanner?.showPrivacyLink && this.config.privacyPolicyUrl;
+        const showCookieLink = this.config.consentBanner?.showCookieLink && this.config.cookiePolicyUrl;
+        const showTermsLink = this.config.consentBanner?.showTermsLink && this.config.termsOfServiceUrl;
+        const showDeclineButton = this.config.consentBanner?.showDeclineButton !== false;
+
+        const customText = this.config.consentBanner?.customText;
+        const mainText = customText || texts.consentText || 'We use this chat to process your requests.';
+        const aiText = this.config.aiDisclosure?.enabled ? (texts.consentTextAI || '') : '';
+
+        return `
+            <div class="gdpr-consent-banner gdpr-position-${position}" id="gdprConsentBanner">
+                <div class="gdpr-consent-content">
+                    <div class="gdpr-consent-title">${texts.consentTitle || '🔒 Privacy & Cookies'}</div>
+                    <div class="gdpr-consent-text">
+                        ${mainText}
+                        ${aiText ? `<br><br>${aiText}` : ''}
+                    </div>
+                    <div class="gdpr-consent-links">
+                        ${showPrivacyLink ? `<a href="${this.config.privacyPolicyUrl}" target="_blank" class="gdpr-link">${texts.privacyLinkText || 'Privacy Policy'}</a>` : ''}
+                        ${showCookieLink ? `<a href="${this.config.cookiePolicyUrl}" target="_blank" class="gdpr-link">${texts.cookieLinkText || 'Cookie Policy'}</a>` : ''}
+                        ${showTermsLink ? `<a href="${this.config.termsOfServiceUrl}" target="_blank" class="gdpr-link">${texts.termsLinkText || 'Terms of Service'}</a>` : ''}
+                    </div>
+                    <div class="gdpr-consent-buttons">
+                        <button class="gdpr-btn gdpr-btn-accept" id="gdprAcceptBtn">${texts.acceptButton || 'Accept & Continue'}</button>
+                        ${showDeclineButton ? `<button class="gdpr-btn gdpr-btn-decline" id="gdprDeclineBtn">${texts.declineButton || 'Decline'}</button>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderPreChatForm() {
+        if (!this.isEnabled() || !this.config.preChatForm?.enabled) return '';
+        if (this.preChatCompleted) return '';
+
+        const texts = this.getTexts();
+        const fields = this.config.preChatForm?.fields || [];
+
+        let fieldsHTML = '';
+        fields.forEach(field => {
+            const label = texts[`${field.id}Label`] || field.id;
+            const placeholder = texts[`${field.id}Placeholder`] || '';
+            const requiredMark = field.required ? ' *' : '';
+            const piiIcon = field.isPII ? `<span class="gdpr-pii-icon" title="${texts.piiIndicator || '🔒 Personal data'}">🔒</span>` : '';
+
+            fieldsHTML += `
+                <div class="gdpr-form-field">
+                    <label class="gdpr-field-label">${label}${requiredMark} ${piiIcon}</label>
+                    <input type="${field.type}"
+                           name="${field.id}"
+                           class="gdpr-field-input"
+                           placeholder="${placeholder}"
+                           ${field.required ? 'required' : ''}
+                           ${field.validation?.minLength ? `minlength="${field.validation.minLength}"` : ''}
+                           ${field.validation?.maxLength ? `maxlength="${field.validation.maxLength}"` : ''}
+                           ${field.validation?.pattern ? `pattern="${field.validation.pattern}"` : ''}>
+                </div>
+            `;
+        });
+
+        const gdprCheckboxEnabled = this.config.preChatForm?.gdprCheckbox?.enabled !== false;
+        const gdprCheckboxRequired = this.config.preChatForm?.gdprCheckbox?.required !== false;
+        const linkToPrivacy = this.config.preChatForm?.gdprCheckbox?.linkToPrivacy && this.config.privacyPolicyUrl;
+
+        const checkboxText = texts.gdprCheckboxText || 'I agree to the processing of my personal data';
+        const checkboxHTML = gdprCheckboxEnabled ? `
+            <div class="gdpr-form-field gdpr-checkbox-field">
+                <label class="gdpr-checkbox-label">
+                    <input type="checkbox" id="gdprFormCheckbox" ${gdprCheckboxRequired ? 'required' : ''}>
+                    <span>${checkboxText}</span>
+                    ${linkToPrivacy ? `<a href="${this.config.privacyPolicyUrl}" target="_blank" class="gdpr-link">${texts.privacyLinkText || 'Privacy Policy'}</a>` : ''}
+                </label>
+            </div>
+        ` : '';
+
+        return `
+            <div class="gdpr-prechat-form" id="gdprPreChatForm">
+                <div class="gdpr-form-content">
+                    <div class="gdpr-form-title">${texts.formTitle || 'Start a Conversation'}</div>
+                    <div class="gdpr-form-subtitle">${texts.formSubtitle || 'Please fill out the form before starting the chat'}</div>
+                    <form id="gdprPreChatFormElement">
+                        ${fieldsHTML}
+                        ${checkboxHTML}
+                        <div class="gdpr-form-info">${texts.requiredFieldMark || '* - required field'}</div>
+                        <button type="submit" class="gdpr-btn gdpr-btn-submit">${texts.startChatButton || 'Start Chat'}</button>
+                    </form>
+                </div>
+            </div>
+        `;
+    }
+
+    renderDeclinedMessage() {
+        if (!this.consentDeclined) return '';
+
+        const texts = this.getTexts();
+        return `
+            <div class="gdpr-declined-message" id="gdprDeclinedMessage">
+                <div class="gdpr-declined-content">
+                    <div class="gdpr-declined-icon">🔒</div>
+                    <div class="gdpr-declined-text">${texts.consentRequired || 'Consent is required to use the chat'}</div>
+                    <button class="gdpr-btn gdpr-btn-reconsider" id="gdprReconsiderBtn">${texts.acceptButton || 'Accept & Continue'}</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ОБРАБОТЧИКИ СОБЫТИЙ
+    // ═══════════════════════════════════════════════════════════
+
+    setupEventListeners() {
+        // Кнопка Accept
+        const acceptBtn = document.getElementById('gdprAcceptBtn');
+        if (acceptBtn) {
+            acceptBtn.addEventListener('click', () => this.handleAccept());
+        }
+
+        // Кнопка Decline
+        const declineBtn = document.getElementById('gdprDeclineBtn');
+        if (declineBtn) {
+            declineBtn.addEventListener('click', () => this.handleDecline());
+        }
+
+        // Кнопка Reconsider
+        const reconsiderBtn = document.getElementById('gdprReconsiderBtn');
+        if (reconsiderBtn) {
+            reconsiderBtn.addEventListener('click', () => this.handleReconsider());
+        }
+
+        // Pre-chat форма
+        const preChatForm = document.getElementById('gdprPreChatFormElement');
+        if (preChatForm) {
+            preChatForm.addEventListener('submit', (e) => this.handlePreChatSubmit(e));
+        }
+    }
+
+    handleAccept() {
+        this.saveConsent(true);
+        this.hideConsentBanner();
+
+        // Отправляем вебхук о согласии
+        this.sendConsentWebhook(true);
+
+        // Показываем pre-chat форму если нужно
+        if (this.isPreChatRequired()) {
+            this.showPreChatForm();
+        } else {
+            this.chat.onGDPRComplete();
+        }
+    }
+
+    handleDecline() {
+        this.saveConsent(false);
+        this.hideConsentBanner();
+        this.showDeclinedMessage();
+
+        // Отправляем вебхук об отказе
+        this.sendConsentWebhook(false);
+    }
+
+    handleReconsider() {
+        this.consentDeclined = false;
+        localStorage.removeItem(this.consentKey);
+        this.hideDeclinedMessage();
+        this.showConsentBanner();
+    }
+
+    handlePreChatSubmit(e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = {};
+
+        // Собираем данные формы
+        const fields = this.config.preChatForm?.fields || [];
+        fields.forEach(field => {
+            const input = form.querySelector(`[name="${field.id}"]`);
+            if (input) {
+                formData[field.id] = input.value;
+            }
+        });
+
+        // Проверяем GDPR чекбокс
+        const gdprCheckbox = document.getElementById('gdprFormCheckbox');
+        if (gdprCheckbox && !gdprCheckbox.checked) {
+            const texts = this.getTexts();
+            this.showNotification(texts.formValidationError || 'Please fill in all required fields', 'error');
+            return;
+        }
+
+        // Сохраняем данные
+        this.savePreChatData(formData);
+
+        // Отправляем вебхук с данными формы
+        this.sendPreChatWebhook(formData);
+
+        this.hidePreChatForm();
+        this.chat.onGDPRComplete();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // UI HELPERS
+    // ═══════════════════════════════════════════════════════════
+
+    hideConsentBanner() {
+        const banner = document.getElementById('gdprConsentBanner');
+        if (banner) {
+            banner.classList.add('gdpr-hiding');
+            setTimeout(() => banner.remove(), 300);
+        }
+    }
+
+    showConsentBanner() {
+        const container = this.chat.widget?.querySelector('.webchat-body') || this.chat.widget;
+        if (container) {
+            const existingBanner = document.getElementById('gdprConsentBanner');
+            if (existingBanner) existingBanner.remove();
+
+            container.insertAdjacentHTML('afterbegin', this.renderConsentBanner());
+            this.setupEventListeners();
+        }
+    }
+
+    hidePreChatForm() {
+        const form = document.getElementById('gdprPreChatForm');
+        if (form) {
+            form.classList.add('gdpr-hiding');
+            setTimeout(() => form.remove(), 300);
+        }
+    }
+
+    showPreChatForm() {
+        const container = this.chat.widget?.querySelector('.webchat-body') || this.chat.widget;
+        if (container) {
+            container.insertAdjacentHTML('afterbegin', this.renderPreChatForm());
+            this.setupEventListeners();
+        }
+    }
+
+    hideDeclinedMessage() {
+        const msg = document.getElementById('gdprDeclinedMessage');
+        if (msg) {
+            msg.classList.add('gdpr-hiding');
+            setTimeout(() => msg.remove(), 300);
+        }
+    }
+
+    showDeclinedMessage() {
+        const container = this.chat.widget?.querySelector('.webchat-body') || this.chat.widget;
+        if (container) {
+            container.insertAdjacentHTML('afterbegin', this.renderDeclinedMessage());
+            this.setupEventListeners();
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        // Создаем toast уведомление
+        const toast = document.createElement('div');
+        toast.className = `gdpr-toast gdpr-toast-${type}`;
+        toast.textContent = message;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('gdpr-toast-show');
+        }, 10);
+
+        setTimeout(() => {
+            toast.classList.remove('gdpr-toast-show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ПРОВЕРКА ГОТОВНОСТИ К ЧАТУ
+    // ═══════════════════════════════════════════════════════════
+
+    shouldBlockChat() {
+        if (!this.isEnabled()) return false;
+        if (!this.config.consentBanner?.blockChat) return false;
+
+        return !this.hasConsent();
+    }
+
+    isReadyForChat() {
+        if (!this.isEnabled()) return true;
+
+        // Проверяем согласие
+        if (this.config.consentBanner?.enabled && !this.hasConsent()) {
+            return false;
+        }
+
+        // Проверяем pre-chat форму
+        if (this.config.preChatForm?.enabled && !this.preChatCompleted) {
+            return false;
+        }
+
+        return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PRIVACY CONTROLS MENU
+    // ═══════════════════════════════════════════════════════════
+
+    renderPrivacyControls() {
+        if (!this.isEnabled() || !this.config.privacyControls?.enabled) return '';
+
+        const texts = this.getTexts();
+        const options = this.config.privacyControls?.options || {};
+
+        return `
+            <div class="gdpr-privacy-controls" id="gdprPrivacyControls">
+                <button class="gdpr-privacy-trigger" id="gdprPrivacyTrigger" title="${texts.privacyMenuTitle || 'Privacy Settings'}">
+                    🔒
+                </button>
+                <div class="gdpr-privacy-menu" id="gdprPrivacyMenu">
+                    <div class="gdpr-privacy-menu-header">
+                        ${texts.privacyMenuTitle || 'Privacy Settings'}
+                    </div>
+                    <div class="gdpr-privacy-menu-divider"></div>
+                    ${options.viewData ? `
+                        <button class="gdpr-privacy-menu-item" id="gdprViewData">
+                            <span>📋</span>
+                            <span>${texts.viewDataButton || 'View My Data'}</span>
+                        </button>
+                    ` : ''}
+                    ${options.exportData ? `
+                        <button class="gdpr-privacy-menu-item" id="gdprExportData">
+                            <span>📥</span>
+                            <span>${texts.exportDataButton || 'Export Data'}</span>
+                        </button>
+                    ` : ''}
+                    ${options.deleteHistory ? `
+                        <button class="gdpr-privacy-menu-item" id="gdprDeleteHistory">
+                            <span>🗑️</span>
+                            <span>${texts.deleteHistoryButton || 'Delete Chat History'}</span>
+                        </button>
+                    ` : ''}
+                    ${options.revokeConsent ? `
+                        <div class="gdpr-privacy-menu-divider"></div>
+                        <button class="gdpr-privacy-menu-item gdpr-danger" id="gdprRevokeConsent">
+                            <span>⚠️</span>
+                            <span>${texts.revokeConsentButton || 'Revoke Consent'}</span>
+                        </button>
+                    ` : ''}
+                    ${options.deleteAllData ? `
+                        <button class="gdpr-privacy-menu-item gdpr-danger" id="gdprDeleteAllData">
+                            <span>🗑️</span>
+                            <span>${texts.deleteAllDataButton || 'Delete All My Data'}</span>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    setupPrivacyControlsListeners() {
+        const trigger = document.getElementById('gdprPrivacyTrigger');
+        const menu = document.getElementById('gdprPrivacyMenu');
+
+        if (trigger && menu) {
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('gdpr-menu-open');
+            });
+
+            // Закрытие меню при клике вне его
+            document.addEventListener('click', (e) => {
+                if (!menu.contains(e.target) && !trigger.contains(e.target)) {
+                    menu.classList.remove('gdpr-menu-open');
+                }
+            });
+        }
+
+        // View Data
+        const viewDataBtn = document.getElementById('gdprViewData');
+        if (viewDataBtn) {
+            viewDataBtn.addEventListener('click', () => this.handleViewData());
+        }
+
+        // Export Data
+        const exportDataBtn = document.getElementById('gdprExportData');
+        if (exportDataBtn) {
+            exportDataBtn.addEventListener('click', () => this.handleExportData());
+        }
+
+        // Delete History
+        const deleteHistoryBtn = document.getElementById('gdprDeleteHistory');
+        if (deleteHistoryBtn) {
+            deleteHistoryBtn.addEventListener('click', () => this.handleDeleteHistory());
+        }
+
+        // Revoke Consent
+        const revokeConsentBtn = document.getElementById('gdprRevokeConsent');
+        if (revokeConsentBtn) {
+            revokeConsentBtn.addEventListener('click', () => this.handleRevokeConsent());
+        }
+
+        // Delete All Data
+        const deleteAllDataBtn = document.getElementById('gdprDeleteAllData');
+        if (deleteAllDataBtn) {
+            deleteAllDataBtn.addEventListener('click', () => this.handleDeleteAllData());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // WEBHOOKS
+    // ═══════════════════════════════════════════════════════════
+
+    async sendWebhook(url, data) {
+        if (!url) return null;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    timestamp: new Date().toISOString(),
+                    sessionId: this.chat.sessionId,
+                    userId: this.getUserId(),
+                    ...data
+                })
+            });
+
+            if (!response.ok) {
+                console.warn('GDPR Webhook error:', response.status);
+                return null;
+            }
+
+            return await response.json();
+        } catch (e) {
+            console.warn('GDPR Webhook failed:', e);
+            return null;
+        }
+    }
+
+    getUserId() {
+        // Генерируем или получаем уникальный ID пользователя
+        let userId = localStorage.getItem(this.storagePrefix + 'user_id');
+        if (!userId) {
+            userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem(this.storagePrefix + 'user_id', userId);
+        }
+        return userId;
+    }
+
+    async sendConsentWebhook(accepted) {
+        const webhookUrl = this.config.webhooks?.consent;
+        if (!webhookUrl) return;
+
+        await this.sendWebhook(webhookUrl, {
+            type: 'consent',
+            action: accepted ? 'accepted' : 'declined',
+            privacyPolicyVersion: this.config.privacyPolicyVersion || '1.0',
+            userData: this.userData
+        });
+    }
+
+    async sendPreChatWebhook(formData) {
+        const webhookUrl = this.config.webhooks?.preChatForm;
+        if (!webhookUrl) return;
+
+        await this.sendWebhook(webhookUrl, {
+            type: 'prechat_form',
+            formData: formData
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // DATA OPERATIONS HANDLERS
+    // ═══════════════════════════════════════════════════════════
+
+    async handleViewData() {
+        const texts = this.getTexts();
+        const webhookUrl = this.config.webhooks?.dataAccess;
+
+        this.showNotification(texts.requestingData || 'Requesting your data...', 'info');
+
+        if (webhookUrl) {
+            const result = await this.sendWebhook(webhookUrl, {
+                type: 'data_access',
+                action: 'view'
+            });
+
+            if (result && result.data) {
+                this.showDataModal(result.data);
+            } else {
+                // Показываем локальные данные
+                this.showDataModal(this.getLocalData());
+            }
+        } else {
+            this.showDataModal(this.getLocalData());
+        }
+    }
+
+    async handleExportData() {
+        const texts = this.getTexts();
+        const webhookUrl = this.config.webhooks?.dataExport;
+
+        this.showNotification(texts.exportingData || 'Preparing data export...', 'info');
+
+        let dataToExport = this.getLocalData();
+
+        if (webhookUrl) {
+            const result = await this.sendWebhook(webhookUrl, {
+                type: 'data_export',
+                action: 'export'
+            });
+
+            if (result && result.data) {
+                dataToExport = { ...dataToExport, ...result.data };
+            }
+        }
+
+        // Скачиваем как JSON
+        this.downloadAsJSON(dataToExport, 'my_chat_data.json');
+        this.showNotification(texts.dataExported || 'Data exported successfully', 'success');
+    }
+
+    async handleDeleteHistory() {
+        const texts = this.getTexts();
+
+        if (!confirm(texts.confirmDeleteHistory || 'Are you sure you want to delete your chat history?')) {
+            return;
+        }
+
+        // Удаляем локальную историю
+        this.chat.clearChatHistory();
+
+        const webhookUrl = this.config.webhooks?.dataDelete;
+        if (webhookUrl) {
+            await this.sendWebhook(webhookUrl, {
+                type: 'data_delete',
+                action: 'delete_history'
+            });
+        }
+
+        this.showNotification(texts.historyDeleted || 'Chat history deleted', 'success');
+    }
+
+    async handleRevokeConsent() {
+        const texts = this.getTexts();
+
+        if (!confirm(texts.confirmRevokeConsent || 'Are you sure you want to revoke your consent? This will end your chat session.')) {
+            return;
+        }
+
+        this.revokeConsent();
+
+        const webhookUrl = this.config.webhooks?.consent;
+        if (webhookUrl) {
+            await this.sendWebhook(webhookUrl, {
+                type: 'consent',
+                action: 'revoked'
+            });
+        }
+
+        this.showNotification(texts.consentRevoked || 'Consent revoked', 'info');
+
+        // Показываем consent banner снова
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+    }
+
+    async handleDeleteAllData() {
+        const texts = this.getTexts();
+
+        if (!confirm(texts.confirmDeleteAllData || 'Are you sure you want to delete ALL your data? This action cannot be undone.')) {
+            return;
+        }
+
+        // Удаляем все локальные данные
+        this.deleteAllLocalData();
+
+        const webhookUrl = this.config.webhooks?.dataDelete;
+        if (webhookUrl) {
+            await this.sendWebhook(webhookUrl, {
+                type: 'data_delete',
+                action: 'delete_all'
+            });
+        }
+
+        this.showNotification(texts.allDataDeleted || 'All data deleted', 'success');
+
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // DATA HELPERS
+    // ═══════════════════════════════════════════════════════════
+
+    getLocalData() {
+        return {
+            consent: {
+                given: this.consentGiven,
+                timestamp: localStorage.getItem(this.consentKey) ?
+                    JSON.parse(localStorage.getItem(this.consentKey))?.timestamp : null
+            },
+            userData: this.userData,
+            sessionId: this.chat.sessionId,
+            chatHistory: this.chat.exportChatHistory ? this.chat.exportChatHistory() : []
+        };
+    }
+
+    deleteAllLocalData() {
+        // Удаляем все GDPR-связанные данные
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(this.storagePrefix)) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+
+        // Очищаем историю чата
+        if (this.chat.clearChatHistory) {
+            this.chat.clearChatHistory();
+        }
+    }
+
+    downloadAsJSON(data, filename) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    showDataModal(data) {
+        const texts = this.getTexts();
+
+        // Создаем модальное окно
+        const modal = document.createElement('div');
+        modal.className = 'gdpr-data-modal';
+        modal.innerHTML = `
+            <div class="gdpr-data-modal-content">
+                <div class="gdpr-data-modal-header">
+                    <span>${texts.yourDataTitle || 'Your Data'}</span>
+                    <button class="gdpr-data-modal-close">&times;</button>
+                </div>
+                <div class="gdpr-data-modal-body">
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+                <div class="gdpr-data-modal-footer">
+                    <button class="gdpr-btn gdpr-btn-accept" id="gdprExportFromModal">
+                        ${texts.exportDataButton || 'Export Data'}
+                    </button>
+                    <button class="gdpr-btn gdpr-btn-decline gdpr-close-modal">
+                        ${texts.closeButton || 'Close'}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Обработчики
+        modal.querySelector('.gdpr-data-modal-close').addEventListener('click', () => modal.remove());
+        modal.querySelector('.gdpr-close-modal').addEventListener('click', () => modal.remove());
+        modal.querySelector('#gdprExportFromModal').addEventListener('click', () => {
+            this.downloadAsJSON(data, 'my_chat_data.json');
+        });
+
+        // Закрытие по клику на фон
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // AI DISCLOSURE & SECURITY INDICATORS
+    // ═══════════════════════════════════════════════════════════
+
+    renderAIDisclosure() {
+        if (!this.isEnabled() || !this.config.aiDisclosure?.enabled) return '';
+        if (!this.config.aiDisclosure?.showBadge) return '';
+
+        const texts = this.getTexts();
+        return `
+            <div class="gdpr-ai-badge" title="${texts.aiDisclosureTooltip || 'This chat uses AI technology'}">
+                <span class="gdpr-ai-badge-icon">🤖</span>
+                <span>${texts.aiDisclosureBadge || 'AI Assistant'}</span>
+            </div>
+        `;
+    }
+
+    renderSecurityIndicator() {
+        if (!this.isEnabled() || !this.config.securityIndicators?.showSecureBadge) return '';
+
+        const texts = this.getTexts();
+        const isSecure = window.location.protocol === 'https:';
+
+        if (!isSecure && this.config.advanced?.httpsOnly) return '';
+
+        return `
+            <div class="gdpr-security-indicator" title="${texts.securityTooltip || 'Secure connection'}">
+                <span class="gdpr-security-icon">${isSecure ? '🔒' : '⚠️'}</span>
+                <span>${isSecure ? (texts.secureConnection || 'Secure') : (texts.insecureConnection || 'Not Secure')}</span>
+            </div>
+        `;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // REVOKE CONSENT
+    // ═══════════════════════════════════════════════════════════
+
+    revokeConsent() {
+        localStorage.removeItem(this.consentKey);
+        localStorage.removeItem(this.preChatDataKey);
+        this.consentGiven = false;
+        this.consentDeclined = false;
+        this.preChatCompleted = false;
+        this.userData = {};
     }
 }
 
-// ============================================
-// WEBCHAT CLASS
-// ============================================
-
+// ===============================================
+// SIMPLE WEB CHAT CLASS
+// ===============================================
 class SimpleWebChat {
     constructor(config = {}) {
     
@@ -388,8 +1168,65 @@ this.monitoringInterval = null;
         }
 
         this.log('info', `🌍 Инициализирован язык: ${this.currentLanguage}`);
-        
+
+        // ✅ НОВОЕ: GDPR Manager для управления согласием и приватностью
+        this.gdprManager = null;
+        this.gdprReady = false;
+
         this.init();
+    }
+
+    // ✅ НОВОЕ: Инициализация GDPR системы
+    initGDPR() {
+        if (!this.config.gdpr?.enabled) {
+            this.gdprReady = true;
+            this.log('info', '🔒 GDPR отключен в настройках');
+            return;
+        }
+
+        this.gdprManager = new GDPRManager(this);
+
+        // Проверяем нужно ли показывать GDPR элементы
+        if (this.gdprManager.shouldBlockChat()) {
+            // Показываем consent banner или declined message
+            if (this.gdprManager.hasConsent() === false) {
+                // Пользователь ранее отклонил - показываем declined message
+                this.gdprManager.renderDeclinedMessage();
+            } else if (!this.gdprManager.hasConsent()) {
+                // Еще не давал согласие - показываем banner
+                this.gdprManager.renderConsentBanner();
+            } else if (this.gdprManager.isPreChatRequired()) {
+                // Согласие есть, но нужна pre-chat форма
+                this.gdprManager.renderPreChatForm();
+            }
+        } else {
+            this.gdprReady = true;
+        }
+
+        this.log('info', '🔒 GDPR Manager инициализирован');
+    }
+
+    // ✅ НОВОЕ: Callback когда GDPR процесс завершен
+    onGDPRComplete() {
+        this.gdprReady = true;
+        this.log('info', '✅ GDPR согласие получено, чат готов к работе');
+
+        // Показываем приветственное сообщение если настроено
+        if (this.config.behavior?.showWelcome !== false) {
+            const welcomeText = this.texts?.welcomeMessage || this.config.texts?.welcomeMessage;
+            if (welcomeText && this.messagesContainer) {
+                // Проверяем что сообщение еще не показано
+                const existingWelcome = this.messagesContainer.querySelector('.webchat-message.bot');
+                if (!existingWelcome) {
+                    this.addMessage(welcomeText, 'bot');
+                }
+            }
+        }
+
+        // Автофокус на поле ввода
+        if (this.messageInput && !this.isMinimized) {
+            setTimeout(() => this.messageInput.focus(), 100);
+        }
     }
     
     // ✅ ПРАВИЛЬНЫЙ МЕТОД: Минимальные fallback тексты (только резерв!)
@@ -447,6 +1284,7 @@ this.monitoringInterval = null;
         return true;
     }
 
+    // ✅ УСТАРЕЛО: Функция больше не используется (виджеты управляются через createFloatingWidget)
     getCompactSize() {
         return { width: 70, height: 70 }; // Возвращаем фиктивные данные для обратной совместимости
     }
@@ -456,6 +1294,7 @@ getCompactPosition() {
     return appearance.compactMinimizedPosition || null;
 }
 
+    // ✅ УСТАРЕЛО: Функция больше не используется (виджеты управляются через createFloatingWidget)
     applyCompactSizing() {
         // Пустая функция для обратной совместимости
         return;
@@ -774,7 +1613,8 @@ checkRateLimit() {
         return {
             allowed: false,
             reason: 'minute_limit',
-            message: `⏳ Слишком много сообщений. Максимум ${this.rateLimiting.maxMessagesPerMinute} сообщений в минуту.`
+            message: (this.texts.rateLimiting?.tooManyMessages || '⏳ Too many messages. Maximum {max} messages per minute.')
+                .replace('{max}', this.rateLimiting.maxMessagesPerMinute)
         };
     }
 
@@ -1492,6 +2332,15 @@ stopMonitoring() {
         // ✅ НОВОЕ: Настройка обработчиков времени
         this.setupScrollDateHandlers();
         this.updateStatus('connected');
+
+        // ✅ НОВОЕ: Инициализация GDPR системы
+        this.initGDPR();
+
+        // ✅ НОВОЕ: Настройка обработчиков Privacy Controls
+        setTimeout(() => {
+            this.setupGDPRPrivacyControls();
+        }, 100);
+
         // ✅ НОВОЕ: Запуск мониторинга
 this.startMonitoring();
         // ✅ НОВОЕ: Мобильная адаптация
@@ -1563,6 +2412,7 @@ setTimeout(() => {
     // Создание виджета чата
     createChatWidget() {
         const widget = document.createElement('div');
+        // ✅ НОВОЕ: При инициализации виджет скрыт, показывается только плавающий виджет
         widget.className = 'webchat-widget webchat-minimized';
         widget.style.display = 'none'; // Скрываем основной виджет при старте
 // Проверяем настройку showInputArea
@@ -1602,10 +2452,7 @@ if (!this.shouldShowBranding()) {
         this.applyTheme();
         // ✅ НОВОЕ: Применяем кастомные настройки
         this.applyCustomAppearance();
-        // Применяем настройки внешнего вида
-        if (this.isCompactMode) {
-            this.applyCompactSizing();
-        }
+
         // ✅ НОВОЕ: Создаем плавающий виджет
         this.createFloatingWidget();
         // Обновляем видимость виджета
@@ -1620,20 +2467,30 @@ generateWidgetHTML() {
     const languageSwitcherHTML = this.generateLanguageSwitcherHTML();
     const contactsHTML = this.shouldShowContacts() ? this.generateContactsHTML() : '';
     const brandingHTML = this.generateBrandingHTML();
-    
+
+    // ✅ GDPR элементы
+    const gdprPrivacyControlsHTML = this.generateGDPRPrivacyControlsHTML();
+    const gdprAIDisclosureHTML = this.generateGDPRAIDisclosureHTML();
+    const gdprSecurityHTML = this.generateGDPRSecurityHTML();
+
     return `
     <div class="webchat-header">
-        ${this.config.behavior && this.config.behavior.enablePopoutMode ? 
-            `<button class="webchat-popout-btn" onclick="webChat.openInPopout()" title="${this.texts.interface?.popoutTooltip || 'Открыть в отдельном окне'}">⤢</button>` : 
+        ${this.config.behavior && this.config.behavior.enablePopoutMode ?
+            `<button class="webchat-popout-btn" onclick="webChat.openInPopout()" title="${this.texts.interface?.popoutTooltip || 'Открыть в отдельном окне'}">⤢</button>` :
             ''}
         <div class="webchat-status-indicator" id="webchatStatusIndicator"></div>
         <div class="webchat-header-info">
             <div class="webchat-header-title">${this.config.botInfo.avatar} ${this.texts.headerTitle}</div>
-            <div class="webchat-header-subtitle">${this.texts.headerSubtitle}</div>
+            <div class="webchat-header-subtitle-row">
+                <span class="webchat-header-subtitle">${this.texts.headerSubtitle}</span>
+                ${gdprAIDisclosureHTML}
+                ${gdprSecurityHTML}
+            </div>
         </div>
         ${configSelectHTML}
         ${languageSwitcherHTML}
         ${contactsHTML}
+        ${gdprPrivacyControlsHTML}
         <button class="webchat-minimize-btn" onclick="webChat.toggleChat()" title="${this.texts.interface.expand}" aria-label="${this.texts.interface.expand}" aria-expanded="false">+</button>
     </div>
 
@@ -2160,6 +3017,39 @@ const toggleTitle = isCollapsed ?
                 ${textHTML}
             </div>
         `;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // GDPR UI GENERATORS
+    // ═══════════════════════════════════════════════════════════
+
+    generateGDPRPrivacyControlsHTML() {
+        if (!this.gdprManager || !this.config.gdpr?.enabled) return '';
+        if (!this.config.gdpr?.privacyControls?.enabled) return '';
+        if (!this.config.gdpr?.privacyControls?.showInHeader) return '';
+
+        return this.gdprManager.renderPrivacyControls();
+    }
+
+    generateGDPRAIDisclosureHTML() {
+        if (!this.gdprManager || !this.config.gdpr?.enabled) return '';
+        if (!this.config.gdpr?.aiDisclosure?.enabled) return '';
+        if (!this.config.gdpr?.aiDisclosure?.showBadge) return '';
+
+        return this.gdprManager.renderAIDisclosure();
+    }
+
+    generateGDPRSecurityHTML() {
+        if (!this.gdprManager || !this.config.gdpr?.enabled) return '';
+        if (!this.config.gdpr?.securityIndicators?.showSecureBadge) return '';
+
+        return this.gdprManager.renderSecurityIndicator();
+    }
+
+    setupGDPRPrivacyControls() {
+        if (this.gdprManager && this.config.gdpr?.privacyControls?.enabled) {
+            this.gdprManager.setupPrivacyControlsListeners();
+        }
     }
 
     // ✅ УЛУЧШЕННОЕ: Переключение конфигурации с проверкой доступности
@@ -4272,6 +5162,7 @@ if (this.popoutBtn) {
             this.log('debug', '📜 Прокрутка при разворачивании чата');
         }, 150);
     }
+
     // ✅ НОВОЕ: Управляем видимостью плавающего виджета
     this.updateFloatingWidgetVisibility();
 }
@@ -4353,7 +5244,7 @@ expandFromCompact() {
     // 3. Принудительный reflow для применения стилей
     void this.widget.offsetHeight;
 
-    // 4. Теперь убираем компактные классы
+    // 4. Теперь убираем класс minimized
     this.widget.classList.remove('webchat-minimized');
 
     // 5. Принудительный reflow
@@ -4366,7 +5257,7 @@ expandFromCompact() {
     });
 }
 
-// ✅ НОВЫЙ МЕТОД: Сворачивание в компактный режим
+// ✅ НОВЫЙ МЕТОД: Сворачивание чата
 collapseToCompact() {
     // Скрываем основной виджет
     this.widget.style.display = 'none';
@@ -4378,14 +5269,12 @@ expandMobileChat() {
     this.widget.style.display = 'flex';
     this.widget.classList.add('webchat-expanding');
     this.widget.classList.remove('webchat-minimized', 'webchat-collapsing');
-    
-    if (this.isCompactMode) {
-        this.widget.style.width = '';
-        this.widget.style.height = '';
-        this.widget.style.maxWidth = '';
-        this.widget.style.minHeight = '';
-    }
-    
+
+    this.widget.style.width = '';
+    this.widget.style.height = '';
+    this.widget.style.maxWidth = '';
+    this.widget.style.minHeight = '';
+
     setTimeout(() => {
         if (this.widget) {
             this.widget.classList.remove('webchat-expanding');
@@ -4394,7 +5283,7 @@ expandMobileChat() {
     }, 400);
 }
 
-// ✅ НОВОЕ: Сворачивание мобильного чата  
+// ✅ НОВОЕ: Сворачивание мобильного чата
 collapseMobileChat() {
     this.widget.classList.add('webchat-collapsing');
     this.widget.classList.remove('webchat-expanding');
@@ -4842,124 +5731,253 @@ this.sendMonitoringData('message');
     }
 
     // Отправка сообщения в AI
-    // ✅ ОТПРАВКА ЧЕРЕЗ WORKER (ЗАЩИЩЕННАЯ)
     async sendMessageToAI(messageText, messageType, audioData, fileData) {
         // Устанавливаем значения по умолчанию
         messageType = messageType || 'text';
         audioData = audioData || null;
         fileData = fileData || null;
-
+        
         try {
             this.updateStatus('connecting');
             this.showTypingIndicator();
+            
+            // ✅ УЛУЧШЕННАЯ ПЕРЕДАЧА ЯЗЫКА
+const actualLanguage = this.currentLanguage || this.config.language || 'ru';
 
-            // ✅ ПРОСТЫЕ данные для Worker (Worker преобразует в сложную структуру)
-            const payload = {
-                type: messageType,
-                message: messageText || '',
-                fileData: fileData || null,
-                audioData: audioData || null,
-                sessionId: this.sessionId,
-                language: this.currentLanguage || this.config.language || 'ru',
-                configName: this.currentConfigName,
-                apiUrl: this.config.aiCoreUrl,  // ✅ URL из конфига - Worker будет использовать
-                maxLength: this.config.technical?.maxMessageLength || 1000,
-                userAgent: navigator.userAgent,
-                pageUrl: window.location.href,
-                referrer: document.referrer
-            };
+const messageData = {
+    platform: 'webchat',
+    message_text: messageText,
+    user_id: this.extractUserId(),
+    user_name: this.extractUserName(),
+    session_id: this.sessionId,
+    language: actualLanguage,
+    messageType: messageType,
+    
+    content: {
+        text: messageText,
+        metadata: {
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            url: window.location.href,
+            referrer: document.referrer,
+            chatLanguage: actualLanguage,
+            currentConfig: this.currentConfigName,
+            configLanguage: this.config.language
+        }
+    },
+            
+    platformCapabilities: {
+        supportsVoice: this.config.behavior ? this.config.behavior.enableVoice : false,
+        supportsButtons: this.config.behavior ? this.config.behavior.showQuickButtons : false,
+        supportsCustomUI: true,
+        maxTextLength: this.config.technical ? this.config.technical.maxMessageLength : 1000,
+        realTime: true,
+        configSwitcher: this.showConfigSwitcher,
+        // ✅ НОВОЕ: поддержка файлов
+        supportsFiles: this.fileSettings.enableFileUpload,
+        supportsPasteImages: this.fileSettings.enablePasteImages,
+        maxFileSize: this.fileSettings.maxFileSize,
+        allowedFileTypes: this.fileSettings.allowedTypes
+    }
+};
 
-            this.log('debug', `📤 Отправляем в Worker:`, {
-                type: messageType,
-                hasMessage: !!messageText,
-                hasFile: !!fileData,
-                hasAudio: !!audioData,
-                apiUrl: payload.apiUrl
-            });
+            if (audioData && messageType === 'voice') {
+                messageData.content.voice = {
+                    audioData: audioData,
+                    format: 'wav'
+                };
+                messageData.voice_data = audioData;
+                messageData.voice_format = 'wav';
+            }
 
-            // ✅ ОТПРАВКА ЧЕРЕЗ WORKER с Bearer токеном
-            const response = await fetch(`${WORKER_URL}/api/send`, {
-                method: 'POST',
-                headers: getAuthHeaders(), // Authorization: Bearer TOKEN
-                body: JSON.stringify(payload)
-            });
+// ✅ ИСПРАВЛЕНИЕ: Обработка файлов с проверкой данных
+            if (fileData && messageType === 'file') {
+                
+                if (fileData.data) {
+                    messageData.content.file = {
+                        fileData: fileData.data,
+                        fileName: fileData.name,
+                        fileType: fileData.type,
+                        fileSize: fileData.size,
+                        format: fileData.format
+                    };
+                    messageData.file_data = fileData.data;
+                    messageData.file_name = fileData.name;
+                    messageData.file_type = fileData.type;
+                    messageData.file_size = fileData.size;
+                    messageData.file_format = fileData.format;
+                    
+                } else {
+                    this.log('error','❌ fileData.data отсутствует!');
+                    throw new Error('Ошибка: данные файла не загружены');
+                }
+            }
+
+            const controller = new AbortController();
+const self = this;
+const timeoutId = setTimeout(function() { 
+    controller.abort(); 
+}, this.config.technical ? this.config.technical.requestTimeout : 180000);
+
+// ✅ РАСШИРЕННОЕ ЛОГИРОВАНИЕ для файлов
+this.log('debug', `📤 Отправляем в AI:`, {
+    messageType: messageData.messageType,
+    hasFile: !!(messageData.file_data),
+    language: messageData.language,
+    chatLanguage: messageData.content.metadata.chatLanguage,
+    configLanguage: messageData.content.metadata.configLanguage,
+    currentConfig: this.currentConfigName,
+    fileInfo: messageData.file_data ? {
+        fileName: messageData.file_name,
+        fileType: messageData.file_type,
+        fileSize: messageData.file_size,
+        dataLength: messageData.file_data ? messageData.file_data.length : 0
+    } : null
+});
+
+// ✅ ЛОГИРУЕМ ПОЛНУЮ СТРУКТУРУ СООБЩЕНИЯ (без файловых данных)
+const logData = { ...messageData };
+if (logData.file_data) {
+    logData.file_data = `[BASE64_DATA_${logData.file_data.length}_CHARS]`;
+}
+if (logData.content && logData.content.file && logData.content.file.fileData) {
+    logData.content.file.fileData = `[BASE64_DATA_${logData.content.file.fileData.length}_CHARS]`;
+}
+
+const response = await this.fetchWithRetry(this.config.aiCoreUrl, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest', // ✅ CSRF защита
+        'X-Session-ID': this.sessionId // ✅ Дополнительная идентификация
+    },
+    body: JSON.stringify(messageData),
+    signal: controller.signal
+});
+
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
-                // Проверяем, не ошибка ли лицензии
-                if (response.status === 401) {
-                    const errorData = await response.json();
-                    if (errorData.licenseError) {
-                        showLicenseError('License Error', errorData.message || 'License verification failed');
-                    }
-                }
-                throw new Error(`Worker error: ${response.status}`);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const contentType = response.headers.get('content-type');
             let aiResponse;
 
-            // ✅ ОБРАБОТКА АУДИО
-            if (contentType && contentType.includes('audio')) {
-                const audioBlob = await response.blob();
-
-                aiResponse = {
-                    responseType: 'voice',
-                    content: {
-                        voice: { audioBlob: audioBlob },
-                        text: this.texts.system.voiceMessage
+            try {
+                if (contentType && contentType.includes('audio')) {
+                    
+                    // ✅ ЕДИНСТВЕННОЕ ЧТЕНИЕ response
+                    const audioBlob = await response.blob();
+                    
+                    aiResponse = {
+                        responseType: 'voice',
+                        content: {
+                            voice: { audioBlob: audioBlob },
+                            text: this.texts.system.voiceMessage
+                        }
+                    };
+                } else {
+                    // ✅ ЕДИНСТВЕННОЕ ЧТЕНИЕ для текста
+                    const responseText = await response.text();
+                    try {
+                        aiResponse = JSON.parse(responseText);
+                    } catch (parseError) {
+                        aiResponse = {
+                            responseType: 'text',
+                            content: { text: responseText || this.texts.errors.fallbackMessage }
+                        };
                     }
-                };
 
-                this.log('info', '🎵 Получен аудио ответ');
-            } else {
-                // ✅ JSON ответ
-                const result = await response.json();
-
-                if (!result.success && result.licenseError) {
-                    showLicenseError('License Error', result.message || 'License verification failed');
-                    throw new Error('License verification failed');
+                    if (!aiResponse.content) {
+                        aiResponse = {
+                            responseType: 'text',
+                            content: {
+                                text: aiResponse.response_text || aiResponse.text || aiResponse.message || this.texts.errors.fallbackMessage
+                            }
+                        };
+                    }
                 }
+            } catch (responseError) {
+    this.log('error','❌ ОШИБКА ЧТЕНИЯ ОТВЕТА:', responseError);
+    aiResponse = {
+        responseType: 'text',
+        content: { text: `❌ ${this.texts.errors.connectionError}: ${responseError.message}` }
+    };
+}
 
-                if (!result.success) {
-                    throw new Error(result.error || 'Worker call failed');
-                }
+this.updateStatus('connected');
+this.hideTypingIndicator();
 
-                aiResponse = {
-                    responseType: result.responseType || 'text',
-                    content: result.content || {
-                        text: this.texts.errors.fallbackMessage
-                    },
-                    commands: result.commands
-                };
-            }
+return aiResponse;
 
-            this.updateStatus('connected');
-            this.hideTypingIndicator();
+} catch (error) {
+    this.log('error', '❌ AI Core communication error:', error);
 
-            return aiResponse;
+    // ✅ УЛУЧШЕННАЯ ОБРАБОТКА ОШИБОК: Детальная классификация
+    let errorMessage = this.texts.errors.connectionError;
+    let errorType = 'unknown';
 
-        } catch (error) {
-            this.log('error', '❌ Worker error:', error);
-
-            this.updateStatus('error');
-            this.hideTypingIndicator();
-
-            // Определяем тип ошибки
-            let errorMessage = this.texts.errors.connectionError;
-
-            if (error.message.includes('License')) {
-                errorMessage = this.texts.errors?.licenseError || this.texts.errors.connectionError;
-            } else if (error.message.includes('401') || error.message.includes('403')) {
-                errorMessage = this.texts.errors?.authError || this.texts.errors.connectionError;
-            }
-
-            return {
-                responseType: 'text',
-                content: {
-                    text: `${errorMessage}<br><br>${this.texts.errors.fallbackMessage}`
-                }
-            };
+    // ✅ КРИТИЧЕСКАЯ БЕЗОПАСНОСТЬ: Классификация типов ошибок
+    if (error.name === 'AbortError') {
+        errorType = 'timeout';
+        errorMessage = this.texts.errors?.timeoutError || this.texts.errors.connectionError;
+    } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+        errorType = 'network';
+        errorMessage = this.texts.errors?.networkError || this.texts.errors.connectionError;
+    } else if (error.message.includes('413')) {
+        errorType = 'payload_too_large';
+        errorMessage = messageType === 'file'
+            ? `📦 ${this.texts.interface.fileTooLarge}`
+            : (this.texts.errors?.dataSizeError || this.texts.errors.connectionError);
+    } else if (error.message.includes('400')) {
+        errorType = 'bad_request';
+        errorMessage = this.texts.errors?.badRequest || this.texts.errors.connectionError;
+    } else if (error.message.includes('401') || error.message.includes('403')) {
+        errorType = 'auth_error';
+        errorMessage = this.texts.errors?.authError || this.texts.errors.connectionError;
+    } else if (error.message.includes('404')) {
+        errorType = 'not_found';
+        errorMessage = this.texts.errors?.serviceUnavailable || this.texts.errors.connectionError;
+    } else if (error.message.includes('429')) {
+        errorType = 'rate_limit';
+        errorMessage = this.texts.errors?.rateLimitError || this.texts.errors.connectionError;
+    } else if (error.message.includes('500') || error.message.includes('502') ||
+               error.message.includes('503') || error.message.includes('504')) {
+        errorType = 'server_error';
+        errorMessage = this.texts.errors?.serverError || this.texts.errors.connectionError;
+    } else if (messageType === 'file') {
+        if (error.message.includes('unsupported') || error.message.includes('not allowed')) {
+            errorType = 'file_type_error';
+            errorMessage = `❌ ${this.texts.interface.fileTypeNotAllowed}`;
+        } else {
+            errorType = 'file_error';
+            errorMessage = `❌ ${this.texts.interface.fileError}`;
         }
+    }
+
+    // Логируем тип ошибки для мониторинга
+    this.log('error', `❌ Тип ошибки: ${errorType}`, {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+    });
+
+    this.updateStatus('error');
+    this.hideTypingIndicator();
+
+    return {
+        responseType: 'text',
+        content: {
+            text: `${errorMessage}<br><br>${this.texts.errors.fallbackMessage}`
+        },
+        error: {
+            type: errorType,
+            message: error.message
+        }
+    };
+}
     }
 
     // Обработка ответа AI
@@ -6898,11 +7916,7 @@ for (let configName in availableConfigs) {
     popoutWindow.getAvailableConfigs = window.getAvailableConfigs;
     popoutWindow.getSortedConfigsForUI = window.getSortedConfigsForUI;
     popoutWindow.getEffectiveTheme = window.getEffectiveTheme;
-
-    // ✅ ИСПРАВЛЕНИЕ: Копируем лицензию для popout окна
-    popoutWindow.WEBCHAT_LICENSE = window.WEBCHAT_LICENSE;
-    this.log('debug', '🔐 Лицензия скопирована в popout окно');
-
+    
     // Загружаем скрипты
     setTimeout(() => {
         // Копируем необходимые скрипты
@@ -8792,7 +9806,7 @@ formatDateHeader(date, language = null) {
         }
     } catch (error) {
         this.log('error','❌ Ошибка форматирования заголовка даты:', error);
-        return 'Ошибка даты';
+        return this.texts.errors?.dateError || 'Date error';
     }
 }
 
@@ -10072,28 +11086,11 @@ function initWebChat(config = {}) {
 }
 
 // Автоинициализация при загрузке DOM
-document.addEventListener('DOMContentLoaded', async function() {
-    // ✅ ШАГ 1: Ждем проверки лицензии
-    console.log('🔄 Ждем проверки лицензии...');
-
-    let attempts = 0;
-    while (!window.WEBCHAT_LICENSE && attempts < 100) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        attempts++;
-    }
-
-    if (!window.WEBCHAT_LICENSE) {
-        console.error('❌ License check timeout');
-        showLicenseError('License Verification Timeout', 'Unable to verify license. Please reload the page.');
-        return; // НЕ инициализируем чат без лицензии
-    }
-
-    console.log('✅ Лицензия проверена, инициализируем чат...');
-
-    // ✅ ШАГ 2: Устанавливаем WebChatConfig если его еще нет
+document.addEventListener('DOMContentLoaded', function() {
+    // ✅ ШАГ 1: Устанавливаем WebChatConfig если его еще нет
     if (!window.WebChatConfig) {
         console.log('🔧 Автоматическая установка WebChatConfig...');
-
+        
         // Проверяем выбранную конфигурацию
         if (window.webchatSelectedConfig && window[window.webchatSelectedConfig]) {
             window.WebChatConfig = window[window.webchatSelectedConfig];
@@ -10113,8 +11110,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error('❌ Не найдена ни одна конфигурация!');
         }
     }
-
-    // ✅ ШАГ 3: Проверяем и инициализируем чат
+    
+    // ✅ ШАГ 2: Проверяем и инициализируем чат
     if (!webChat && window.WebChatConfig) {
         setTimeout(() => {
             initWebChat();

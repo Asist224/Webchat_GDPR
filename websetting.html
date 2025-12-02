@@ -1941,6 +1941,10 @@
         <span class="nav-item-icon">📤</span>
         <span class="nav-item-label" data-i18n="nav.export_import">Экспорт/Импорт</span>
     </div>
+    <div class="nav-item" data-page="gdpr-settings">
+        <span class="nav-item-icon">🔒</span>
+        <span class="nav-item-label" data-i18n="nav.gdpr">GDPR / Приватность</span>
+    </div>
 </div>
             </nav>
         </aside>
@@ -4193,6 +4197,311 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Страница: GDPR / Приватность -->
+            <div id="gdpr-settings" class="page-content" style="display: none;">
+                <div class="page-header">
+                    <h2 data-i18n="gdpr.title">🔒 GDPR и настройки приватности</h2>
+                    <p data-i18n="gdpr.subtitle">Управление соответствием GDPR и защитой данных пользователей</p>
+                </div>
+
+                <!-- Основные настройки GDPR -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">
+                        <span>⚙️</span> <span data-i18n="gdpr.main_settings">Основные настройки</span>
+                    </h3>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprEnabled" onchange="updateGDPRSetting('enabled', this.checked)">
+                            <span data-i18n="gdpr.enable_gdpr">Включить GDPR режим</span>
+                        </label>
+                        <p class="form-hint" data-i18n="gdpr.enable_gdpr_hint">Активирует все функции защиты данных и согласия</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="gdpr.mode">Режим GDPR</label>
+                        <select class="form-select" id="gdprMode" onchange="updateGDPRSetting('mode', this.value)">
+                            <option value="strict" data-i18n="gdpr.mode_strict">Строгий (рекомендуется для ЕС)</option>
+                            <option value="standard" data-i18n="gdpr.mode_standard">Стандартный</option>
+                            <option value="minimal" data-i18n="gdpr.mode_minimal">Минимальный</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="gdpr.privacy_url">URL политики конфиденциальности</label>
+                        <input type="url" class="form-input" id="gdprPrivacyUrl" placeholder="https://example.com/privacy" onchange="updateGDPRSetting('privacyPolicyUrl', this.value)">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="gdpr.terms_url">URL пользовательского соглашения</label>
+                        <input type="url" class="form-input" id="gdprTermsUrl" placeholder="https://example.com/terms" onchange="updateGDPRSetting('termsOfServiceUrl', this.value)">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="gdpr.cookie_url">URL политики cookies</label>
+                        <input type="url" class="form-input" id="gdprCookieUrl" placeholder="https://example.com/cookies" onchange="updateGDPRSetting('cookiePolicyUrl', this.value)">
+                    </div>
+                </div>
+
+                <!-- Баннер согласия -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">
+                        <span>📋</span> <span data-i18n="gdpr.consent_banner">Баннер согласия</span>
+                    </h3>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprBannerEnabled" checked onchange="updateGDPRSetting('consentBanner.enabled', this.checked)">
+                            <span data-i18n="gdpr.banner_enabled">Показывать баннер согласия</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprBannerBlock" checked onchange="updateGDPRSetting('consentBanner.blockChat', this.checked)">
+                            <span data-i18n="gdpr.banner_block">Блокировать чат до получения согласия</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="gdpr.banner_position">Позиция баннера</label>
+                        <select class="form-select" id="gdprBannerPosition" onchange="updateGDPRSetting('consentBanner.position', this.value)">
+                            <option value="bottom" data-i18n="gdpr.position_bottom">Снизу</option>
+                            <option value="top" data-i18n="gdpr.position_top">Сверху</option>
+                            <option value="center" data-i18n="gdpr.position_center">По центру</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="gdpr.expire_days">Срок действия согласия (дней)</label>
+                        <input type="number" class="form-input" id="gdprExpireDays" value="365" min="1" max="730" onchange="updateGDPRSetting('consentBanner.expireDays', parseInt(this.value))">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprShowDecline" checked onchange="updateGDPRSetting('consentBanner.showDeclineButton', this.checked)">
+                            <span data-i18n="gdpr.show_decline">Показывать кнопку "Отклонить"</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprShowPrivacyLink" checked onchange="updateGDPRSetting('consentBanner.showPrivacyLink', this.checked)">
+                            <span data-i18n="gdpr.show_privacy_link">Показывать ссылку на политику конфиденциальности</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Pre-Chat форма -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">
+                        <span>📝</span> <span data-i18n="gdpr.prechat_form">Pre-Chat форма</span>
+                    </h3>
+
+                    <div class="info-box mb-3">
+                        <div class="info-box-icon">💡</div>
+                        <div class="info-box-content" data-i18n="gdpr.prechat_info">
+                            Pre-Chat форма позволяет собирать данные пользователя перед началом чата.
+                            Данные отправляются через webhook для обработки в n8n или другой системе.
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprPreChatEnabled" onchange="updateGDPRSetting('preChatForm.enabled', this.checked)">
+                            <span data-i18n="gdpr.prechat_enabled">Включить Pre-Chat форму</span>
+                        </label>
+                        <p class="form-hint" data-i18n="gdpr.prechat_enabled_hint">По умолчанию отключена. Включите если нужно собирать данные пользователя</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprPreChatAfterConsent" checked onchange="updateGDPRSetting('preChatForm.showAfterConsent', this.checked)">
+                            <span data-i18n="gdpr.prechat_after_consent">Показывать после получения согласия</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprPreChatGdprCheckbox" checked onchange="updateGDPRSetting('preChatForm.gdprCheckbox.enabled', this.checked)">
+                            <span data-i18n="gdpr.prechat_gdpr_checkbox">Показывать чекбокс согласия на обработку данных</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- AI Disclosure -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">
+                        <span>🤖</span> <span data-i18n="gdpr.ai_disclosure">AI Disclosure</span>
+                    </h3>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprAIEnabled" checked onchange="updateGDPRSetting('aiDisclosure.enabled', this.checked)">
+                            <span data-i18n="gdpr.ai_enabled">Информировать об использовании AI</span>
+                        </label>
+                        <p class="form-hint" data-i18n="gdpr.ai_enabled_hint">Обязательно для многих юрисдикций при использовании AI-ассистентов</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprAIBadge" checked onchange="updateGDPRSetting('aiDisclosure.showBadge', this.checked)">
+                            <span data-i18n="gdpr.ai_badge">Показывать бейдж "AI Assistant" в шапке</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprAIWelcome" checked onchange="updateGDPRSetting('aiDisclosure.showInWelcome', this.checked)">
+                            <span data-i18n="gdpr.ai_welcome">Информировать об AI в приветственном сообщении</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Privacy Controls -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">
+                        <span>🛡️</span> <span data-i18n="gdpr.privacy_controls">Контроль приватности</span>
+                    </h3>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprPrivacyEnabled" checked onchange="updateGDPRSetting('privacyControls.enabled', this.checked)">
+                            <span data-i18n="gdpr.privacy_enabled">Включить меню приватности</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprPrivacyInHeader" checked onchange="updateGDPRSetting('privacyControls.showInHeader', this.checked)">
+                            <span data-i18n="gdpr.privacy_in_header">Показывать кнопку в шапке чата</span>
+                        </label>
+                    </div>
+
+                    <h4 style="margin: 15px 0 10px; font-size: 14px;" data-i18n="gdpr.available_options">Доступные опции для пользователя:</h4>
+
+                    <div class="list-editor">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprOptViewData" checked onchange="updateGDPRSetting('privacyControls.options.viewData', this.checked)">
+                            <span data-i18n="gdpr.opt_view_data">Просмотр своих данных</span>
+                        </label>
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprOptExportData" checked onchange="updateGDPRSetting('privacyControls.options.exportData', this.checked)">
+                            <span data-i18n="gdpr.opt_export_data">Экспорт данных (Data Portability)</span>
+                        </label>
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprOptDeleteHistory" checked onchange="updateGDPRSetting('privacyControls.options.deleteHistory', this.checked)">
+                            <span data-i18n="gdpr.opt_delete_history">Удаление истории чата</span>
+                        </label>
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprOptRevokeConsent" checked onchange="updateGDPRSetting('privacyControls.options.revokeConsent', this.checked)">
+                            <span data-i18n="gdpr.opt_revoke_consent">Отзыв согласия</span>
+                        </label>
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprOptDeleteAll" checked onchange="updateGDPRSetting('privacyControls.options.deleteAllData', this.checked)">
+                            <span data-i18n="gdpr.opt_delete_all">Удаление всех данных (Right to Erasure)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Webhooks -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">
+                        <span>🔗</span> <span data-i18n="gdpr.webhooks">Webhooks для n8n</span>
+                    </h3>
+
+                    <div class="info-box mb-3">
+                        <div class="info-box-icon">💡</div>
+                        <div class="info-box-content" data-i18n="gdpr.webhooks_info">
+                            Настройте URL-адреса для отправки данных о согласии, формах и операциях с данными.
+                            Эти webhook'и можно подключить к n8n для записи в PostgreSQL.
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="gdpr.webhook_consent">Webhook согласия</label>
+                        <input type="url" class="form-input" id="gdprWebhookConsent" placeholder="https://n8n.example.com/webhook/consent" onchange="updateGDPRSetting('webhooks.consent', this.value)">
+                        <p class="form-hint" data-i18n="gdpr.webhook_consent_hint">Вызывается при принятии/отклонении согласия</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="gdpr.webhook_prechat">Webhook Pre-Chat формы</label>
+                        <input type="url" class="form-input" id="gdprWebhookPreChat" placeholder="https://n8n.example.com/webhook/prechat" onchange="updateGDPRSetting('webhooks.preChatForm', this.value)">
+                        <p class="form-hint" data-i18n="gdpr.webhook_prechat_hint">Вызывается при отправке Pre-Chat формы</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="gdpr.webhook_data_access">Webhook запроса данных</label>
+                        <input type="url" class="form-input" id="gdprWebhookDataAccess" placeholder="https://n8n.example.com/webhook/data-access" onchange="updateGDPRSetting('webhooks.dataAccess', this.value)">
+                        <p class="form-hint" data-i18n="gdpr.webhook_data_access_hint">Вызывается когда пользователь запрашивает свои данные</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="gdpr.webhook_data_export">Webhook экспорта данных</label>
+                        <input type="url" class="form-input" id="gdprWebhookDataExport" placeholder="https://n8n.example.com/webhook/data-export" onchange="updateGDPRSetting('webhooks.dataExport', this.value)">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="gdpr.webhook_data_delete">Webhook удаления данных</label>
+                        <input type="url" class="form-input" id="gdprWebhookDataDelete" placeholder="https://n8n.example.com/webhook/data-delete" onchange="updateGDPRSetting('webhooks.dataDelete', this.value)">
+                    </div>
+                </div>
+
+                <!-- Security Indicators -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">
+                        <span>🔐</span> <span data-i18n="gdpr.security">Безопасность</span>
+                    </h3>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprSecureBadge" checked onchange="updateGDPRSetting('securityIndicators.showSecureBadge', this.checked)">
+                            <span data-i18n="gdpr.secure_badge">Показывать индикатор безопасного соединения</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprHttpsOnly" checked onchange="updateGDPRSetting('advanced.httpsOnly', this.checked)">
+                            <span data-i18n="gdpr.https_only">Требовать HTTPS соединение</span>
+                        </label>
+                        <p class="form-hint" data-i18n="gdpr.https_only_hint">Отключает чат на небезопасных HTTP соединениях</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprEncryptLocal" checked onchange="updateGDPRSetting('chatHistory.encryptLocal', this.checked)">
+                            <span data-i18n="gdpr.encrypt_local">Шифровать локальную историю</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="d-flex align-center gap-2">
+                            <input type="checkbox" id="gdprCollectIP" onchange="updateGDPRSetting('dataMinimization.collectIP', this.checked)">
+                            <span data-i18n="gdpr.collect_ip">Собирать IP-адреса пользователей</span>
+                        </label>
+                        <p class="form-hint" data-i18n="gdpr.collect_ip_hint">По умолчанию отключено для минимизации данных</p>
+                    </div>
+                </div>
+
+                <!-- Информация о совместимости -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">
+                        <span>📚</span> <span data-i18n="gdpr.compliance_info">Информация о соответствии</span>
+                    </h3>
+
+                    <div class="info-box">
+                        <div class="info-box-icon">ℹ️</div>
+                        <div class="info-box-content" data-i18n="gdpr.compliance_text">
+                            <strong>GDPR (ЕС):</strong> Общий регламент защиты данных требует явного согласия, права на удаление и экспорт данных.<br><br>
+                            <strong>CCPA (Калифорния):</strong> California Consumer Privacy Act требует раскрытия практик сбора данных.<br><br>
+                            <strong>AI Act (ЕС):</strong> Требует раскрытия использования AI-систем при взаимодействии с пользователями.<br><br>
+                            <strong>Рекомендации:</strong> Для полного соответствия включите все опции и настройте webhook'и для логирования согласий в базу данных.
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
 
         <!-- Индикатор сохранения -->
@@ -5967,6 +6276,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (page === 'branding-settings' && typeof loadBrandingSettings === 'function') {
                 setTimeout(() => {
                     loadBrandingSettings();
+                }, 100);
+            }
+
+            // ✅ НОВОЕ: Загружаем GDPR настройки при переходе на страницу GDPR
+            if (page === 'gdpr-settings' && typeof loadGDPRSettings === 'function') {
+                setTimeout(() => {
+                    loadGDPRSettings();
                 }, 100);
             }
         }
@@ -7995,6 +8311,114 @@ function collectGlobalSettings() {
 
     console.log('✅ Собраны глобальные настройки:', settings);
     return settings;
+}
+
+// ═══════════════════════════════════════════════════════════
+// GDPR SETTINGS FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+
+// Обновление настройки GDPR
+function updateGDPRSetting(path, value) {
+    console.log('🔒 GDPR Update:', path, '=', value);
+
+    // Инициализируем gdpr объект если его нет
+    if (!window.GlobalConfigSettings) {
+        window.GlobalConfigSettings = {};
+    }
+    if (!window.GlobalConfigSettings.gdpr) {
+        window.GlobalConfigSettings.gdpr = {};
+    }
+
+    // Разбиваем путь на части (например: 'consentBanner.enabled')
+    const parts = path.split('.');
+    let current = window.GlobalConfigSettings.gdpr;
+
+    // Проходим по пути и создаем вложенные объекты если нужно
+    for (let i = 0; i < parts.length - 1; i++) {
+        if (!current[parts[i]]) {
+            current[parts[i]] = {};
+        }
+        current = current[parts[i]];
+    }
+
+    // Устанавливаем значение
+    current[parts[parts.length - 1]] = value;
+
+    // Помечаем что есть несохраненные изменения
+    isDirty = true;
+    showSaveIndicator('changed', t('save.unsaved_changes'));
+
+    console.log('🔒 GDPR Settings updated:', window.GlobalConfigSettings.gdpr);
+}
+
+// Загрузка GDPR настроек в форму
+function loadGDPRSettings() {
+    const gdpr = window.GlobalConfigSettings?.gdpr || {};
+
+    // Основные настройки
+    setCheckboxValue('gdprEnabled', gdpr.enabled);
+    setSelectValue('gdprMode', gdpr.mode || 'strict');
+    setInputValue('gdprPrivacyUrl', gdpr.privacyPolicyUrl);
+    setInputValue('gdprTermsUrl', gdpr.termsOfServiceUrl);
+    setInputValue('gdprCookieUrl', gdpr.cookiePolicyUrl);
+
+    // Баннер согласия
+    setCheckboxValue('gdprBannerEnabled', gdpr.consentBanner?.enabled !== false);
+    setCheckboxValue('gdprBannerBlock', gdpr.consentBanner?.blockChat !== false);
+    setSelectValue('gdprBannerPosition', gdpr.consentBanner?.position || 'bottom');
+    setInputValue('gdprExpireDays', gdpr.consentBanner?.expireDays || 365);
+    setCheckboxValue('gdprShowDecline', gdpr.consentBanner?.showDeclineButton !== false);
+    setCheckboxValue('gdprShowPrivacyLink', gdpr.consentBanner?.showPrivacyLink !== false);
+
+    // Pre-Chat форма
+    setCheckboxValue('gdprPreChatEnabled', gdpr.preChatForm?.enabled);
+    setCheckboxValue('gdprPreChatAfterConsent', gdpr.preChatForm?.showAfterConsent !== false);
+    setCheckboxValue('gdprPreChatGdprCheckbox', gdpr.preChatForm?.gdprCheckbox?.enabled !== false);
+
+    // AI Disclosure
+    setCheckboxValue('gdprAIEnabled', gdpr.aiDisclosure?.enabled !== false);
+    setCheckboxValue('gdprAIBadge', gdpr.aiDisclosure?.showBadge !== false);
+    setCheckboxValue('gdprAIWelcome', gdpr.aiDisclosure?.showInWelcome !== false);
+
+    // Privacy Controls
+    setCheckboxValue('gdprPrivacyEnabled', gdpr.privacyControls?.enabled !== false);
+    setCheckboxValue('gdprPrivacyInHeader', gdpr.privacyControls?.showInHeader !== false);
+    setCheckboxValue('gdprOptViewData', gdpr.privacyControls?.options?.viewData !== false);
+    setCheckboxValue('gdprOptExportData', gdpr.privacyControls?.options?.exportData !== false);
+    setCheckboxValue('gdprOptDeleteHistory', gdpr.privacyControls?.options?.deleteHistory !== false);
+    setCheckboxValue('gdprOptRevokeConsent', gdpr.privacyControls?.options?.revokeConsent !== false);
+    setCheckboxValue('gdprOptDeleteAll', gdpr.privacyControls?.options?.deleteAllData !== false);
+
+    // Webhooks
+    setInputValue('gdprWebhookConsent', gdpr.webhooks?.consent);
+    setInputValue('gdprWebhookPreChat', gdpr.webhooks?.preChatForm);
+    setInputValue('gdprWebhookDataAccess', gdpr.webhooks?.dataAccess);
+    setInputValue('gdprWebhookDataExport', gdpr.webhooks?.dataExport);
+    setInputValue('gdprWebhookDataDelete', gdpr.webhooks?.dataDelete);
+
+    // Security
+    setCheckboxValue('gdprSecureBadge', gdpr.securityIndicators?.showSecureBadge !== false);
+    setCheckboxValue('gdprHttpsOnly', gdpr.advanced?.httpsOnly !== false);
+    setCheckboxValue('gdprEncryptLocal', gdpr.chatHistory?.encryptLocal !== false);
+    setCheckboxValue('gdprCollectIP', gdpr.dataMinimization?.collectIP);
+
+    console.log('🔒 GDPR settings loaded into form');
+}
+
+// Вспомогательные функции для загрузки значений
+function setCheckboxValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!value;
+}
+
+function setSelectValue(id, value) {
+    const el = document.getElementById(id);
+    if (el && value) el.value = value;
+}
+
+function setInputValue(id, value) {
+    const el = document.getElementById(id);
+    if (el && value !== undefined && value !== null) el.value = value;
 }
 
         function saveConfig() {
