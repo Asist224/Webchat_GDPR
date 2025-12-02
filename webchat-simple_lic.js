@@ -2233,6 +2233,7 @@ switchLanguage(newLanguage) {
     }
     
     // Обновляем интерфейс
+    console.log('🔒 [GDPR DEBUG] switchLanguage() вызывает updateInterface()');
     this.updateInterface();
     this.updateLanguageButtons();
     // Обновляем список конфигураций на новом языке
@@ -2855,8 +2856,12 @@ updateInterface() {
     this.quickButtonsCollapsed = this.config.behavior && this.config.behavior.quickButtonsCollapsed === true;
 
     // ✅ НОВОЕ: Обновляем тексты GDPR при смене языка
+    console.log('🔒 [GDPR DEBUG] updateInterface() завершается, gdprManager =', this.gdprManager);
     if (this.gdprManager) {
+        console.log('🔒 [GDPR DEBUG] Вызываю gdprManager.updateTexts()');
         this.gdprManager.updateTexts();
+    } else {
+        console.log('🔒 [GDPR DEBUG] gdprManager не найден!');
     }
 }
 
