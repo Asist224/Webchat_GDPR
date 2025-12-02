@@ -259,14 +259,20 @@ class GDPRManager {
 
     getTexts() {
         if (typeof this.chat.config.getTexts === 'function') {
-            return this.chat.config.getTexts().gdpr || {};
+            const allTexts = this.chat.config.getTexts();
+            console.log('🔒 [GDPR DEBUG] getTexts() - currentLanguage:', this.chat.currentLanguage);
+            console.log('🔒 [GDPR DEBUG] getTexts() - allTexts.gdpr:', allTexts.gdpr);
+            return allTexts.gdpr || {};
         }
         return {};
     }
 
     // Обновление текстов GDPR при смене языка
     updateTexts() {
+        console.log('🔒 [GDPR DEBUG] updateTexts() вызван');
         const texts = this.getTexts();
+        console.log('🔒 [GDPR DEBUG] texts =', texts);
+        console.log('🔒 [GDPR DEBUG] consentTitle =', texts.consentTitle);
 
         // Обновляем Consent Banner
         const bannerTitle = document.querySelector('#gdprConsentBanner .gdpr-banner-title');
@@ -274,6 +280,8 @@ class GDPRManager {
         const acceptBtn = document.getElementById('gdprAcceptBtn');
         const declineBtn = document.getElementById('gdprDeclineBtn');
         const privacyLink = document.querySelector('#gdprConsentBanner .gdpr-policy-link');
+
+        console.log('🔒 [GDPR DEBUG] bannerTitle element =', bannerTitle);
 
         if (bannerTitle) bannerTitle.textContent = texts.consentTitle || 'Privacy & Cookies';
         if (bannerText) {
