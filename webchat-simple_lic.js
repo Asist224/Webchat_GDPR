@@ -483,19 +483,33 @@ class GDPRManager {
     }
 
     showConsentBanner() {
+        console.log('🔒 [GDPR DEBUG] showConsentBanner() вызван');
+        console.log('🔒 [GDPR DEBUG] this.chat.widget =', this.chat.widget);
+
         const container = this.chat.widget;
         if (container) {
             const existingBanner = document.getElementById('gdprConsentBanner');
             if (existingBanner) existingBanner.remove();
 
+            // Генерируем HTML баннера
+            const bannerHTML = this.renderConsentBanner();
+            console.log('🔒 [GDPR DEBUG] Banner HTML generated, length =', bannerHTML?.length);
+
             // Вставляем баннер после header
             const header = container.querySelector('.webchat-header');
+            console.log('🔒 [GDPR DEBUG] header element =', header);
+
             if (header) {
-                header.insertAdjacentHTML('afterend', this.renderConsentBanner());
+                header.insertAdjacentHTML('afterend', bannerHTML);
+                console.log('🔒 [GDPR DEBUG] Banner вставлен после header');
             } else {
-                container.insertAdjacentHTML('afterbegin', this.renderConsentBanner());
+                container.insertAdjacentHTML('afterbegin', bannerHTML);
+                console.log('🔒 [GDPR DEBUG] Banner вставлен в начало container');
             }
             this.setupEventListeners();
+            console.log('🔒 [GDPR DEBUG] Event listeners настроены');
+        } else {
+            console.error('🔒 [GDPR ERROR] container не найден!');
         }
     }
 
@@ -1194,29 +1208,49 @@ this.monitoringInterval = null;
 
     // ✅ НОВОЕ: Инициализация GDPR системы
     initGDPR() {
+        // DEBUG логирование
+        console.log('🔒 [GDPR DEBUG] initGDPR() вызван');
+        console.log('🔒 [GDPR DEBUG] this.config.gdpr =', this.config.gdpr);
+        console.log('🔒 [GDPR DEBUG] this.widget =', this.widget);
+
         if (!this.config.gdpr?.enabled) {
             this.gdprReady = true;
+            console.log('🔒 [GDPR DEBUG] GDPR отключен - this.config.gdpr?.enabled =', this.config.gdpr?.enabled);
             this.log('info', '🔒 GDPR отключен в настройках');
             return;
         }
 
+        console.log('🔒 [GDPR DEBUG] GDPR включен, создаю GDPRManager...');
         this.gdprManager = new GDPRManager(this);
+        console.log('🔒 [GDPR DEBUG] GDPRManager создан:', this.gdprManager);
 
         // Проверяем нужно ли показывать GDPR элементы
-        if (this.gdprManager.shouldBlockChat()) {
+        const shouldBlock = this.gdprManager.shouldBlockChat();
+        const hasConsent = this.gdprManager.hasConsent();
+        const isPreChatRequired = this.gdprManager.isPreChatRequired();
+
+        console.log('🔒 [GDPR DEBUG] shouldBlockChat =', shouldBlock);
+        console.log('🔒 [GDPR DEBUG] hasConsent =', hasConsent);
+        console.log('🔒 [GDPR DEBUG] isPreChatRequired =', isPreChatRequired);
+
+        if (shouldBlock) {
             // Показываем consent banner или declined message
-            if (this.gdprManager.hasConsent() === false) {
+            if (hasConsent === false) {
                 // Пользователь ранее отклонил - показываем declined message
+                console.log('🔒 [GDPR DEBUG] Показываю declined message');
                 this.gdprManager.showDeclinedMessage();
-            } else if (!this.gdprManager.hasConsent()) {
+            } else if (!hasConsent) {
                 // Еще не давал согласие - показываем banner
+                console.log('🔒 [GDPR DEBUG] Показываю consent banner');
                 this.gdprManager.showConsentBanner();
-            } else if (this.gdprManager.isPreChatRequired()) {
+            } else if (isPreChatRequired) {
                 // Согласие есть, но нужна pre-chat форма
+                console.log('🔒 [GDPR DEBUG] Показываю pre-chat форму');
                 this.gdprManager.showPreChatForm();
             }
         } else {
             this.gdprReady = true;
+            console.log('🔒 [GDPR DEBUG] Не нужно блокировать чат');
         }
 
         this.log('info', '🔒 GDPR Manager инициализирован');
