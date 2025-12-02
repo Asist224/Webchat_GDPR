@@ -274,13 +274,17 @@ class GDPRManager {
         console.log('🔒 [GDPR DEBUG] texts =', texts);
         console.log('🔒 [GDPR DEBUG] consentTitle =', texts.consentTitle);
 
-        // Обновляем Consent Banner
-        const bannerTitle = document.querySelector('#gdprConsentBanner .gdpr-banner-title');
-        const bannerText = document.querySelector('#gdprConsentBanner .gdpr-banner-text');
-        const acceptBtn = document.getElementById('gdprAcceptBtn');
-        const declineBtn = document.getElementById('gdprDeclineBtn');
-        const privacyLink = document.querySelector('#gdprConsentBanner .gdpr-policy-link');
+        // Используем widget как контекст для поиска
+        const container = this.chat.widget || document;
 
+        // Обновляем Consent Banner
+        const bannerTitle = container.querySelector('#gdprConsentBanner .gdpr-banner-title');
+        const bannerText = container.querySelector('#gdprConsentBanner .gdpr-banner-text');
+        const acceptBtn = container.querySelector('#gdprAcceptBtn');
+        const declineBtn = container.querySelector('#gdprDeclineBtn');
+        const privacyLink = container.querySelector('#gdprConsentBanner .gdpr-policy-link');
+
+        console.log('🔒 [GDPR DEBUG] container =', container);
         console.log('🔒 [GDPR DEBUG] bannerTitle element =', bannerTitle);
 
         if (bannerTitle) bannerTitle.textContent = texts.consentTitle || 'Privacy & Cookies';
@@ -294,11 +298,13 @@ class GDPRManager {
         if (privacyLink) privacyLink.innerHTML = `📋 ${texts.privacyLinkText || 'Privacy Policy'}`;
 
         // Обновляем Pre-Chat Form
-        const formTitle = document.querySelector('#gdprPreChatForm .gdpr-prechat-title');
-        const formSubtitle = document.querySelector('#gdprPreChatForm .gdpr-prechat-subtitle');
-        const formSubmitBtn = document.querySelector('#gdprPreChatForm .gdpr-btn-accept');
-        const formInfo = document.querySelector('#gdprPreChatForm .gdpr-form-info');
-        const formCheckboxText = document.querySelector('#gdprPreChatForm .gdpr-checkbox-text');
+        const formTitle = container.querySelector('#gdprPreChatForm .gdpr-prechat-title');
+        const formSubtitle = container.querySelector('#gdprPreChatForm .gdpr-prechat-subtitle');
+        const formSubmitBtn = container.querySelector('#gdprPreChatForm .gdpr-btn-accept');
+        const formInfo = container.querySelector('#gdprPreChatForm .gdpr-form-info');
+        const formCheckboxText = container.querySelector('#gdprPreChatForm .gdpr-checkbox-text');
+
+        console.log('🔒 [GDPR DEBUG] formTitle element =', formTitle);
 
         if (formTitle) formTitle.textContent = texts.formTitle || 'Start a Conversation';
         if (formSubtitle) formSubtitle.textContent = texts.formSubtitle || 'Please fill out the form before starting the chat';
@@ -313,8 +319,8 @@ class GDPRManager {
         // Обновляем метки полей формы
         const fields = this.config.preChatForm?.fields || [];
         fields.forEach(field => {
-            const label = document.querySelector(`#gdprPreChatForm label[for="${field.id}"], #gdprPreChatForm input[name="${field.id}"]`)?.closest('.gdpr-form-group')?.querySelector('.gdpr-form-label');
-            const input = document.querySelector(`#gdprPreChatForm input[name="${field.id}"]`);
+            const input = container.querySelector(`#gdprPreChatForm input[name="${field.id}"]`);
+            const label = input?.closest('.gdpr-form-group')?.querySelector('.gdpr-form-label');
             if (label) {
                 const labelText = texts[`${field.id}Label`] || field.id;
                 const requiredMark = field.required ? '<span class="gdpr-required">*</span>' : '';
@@ -327,8 +333,8 @@ class GDPRManager {
         });
 
         // Обновляем Declined Message
-        const declinedText = document.querySelector('#gdprDeclinedMessage .gdpr-declined-text');
-        const reconsiderBtn = document.getElementById('gdprReconsiderBtn');
+        const declinedText = container.querySelector('#gdprDeclinedMessage .gdpr-declined-text');
+        const reconsiderBtn = container.querySelector('#gdprReconsiderBtn');
 
         if (declinedText) declinedText.textContent = texts.declinedMessage || texts.consentRequired || 'Consent is required to use the chat';
         if (reconsiderBtn) reconsiderBtn.textContent = texts.declinedReconsiderButton || texts.acceptButton || 'Accept & Continue';
