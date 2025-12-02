@@ -1191,13 +1191,13 @@ this.monitoringInterval = null;
             // Показываем consent banner или declined message
             if (this.gdprManager.hasConsent() === false) {
                 // Пользователь ранее отклонил - показываем declined message
-                this.gdprManager.renderDeclinedMessage();
+                this.gdprManager.showDeclinedMessage();
             } else if (!this.gdprManager.hasConsent()) {
                 // Еще не давал согласие - показываем banner
-                this.gdprManager.renderConsentBanner();
+                this.gdprManager.showConsentBanner();
             } else if (this.gdprManager.isPreChatRequired()) {
                 // Согласие есть, но нужна pre-chat форма
-                this.gdprManager.renderPreChatForm();
+                this.gdprManager.showPreChatForm();
             }
         } else {
             this.gdprReady = true;
