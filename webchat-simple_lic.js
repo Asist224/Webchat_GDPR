@@ -2236,6 +2236,13 @@ switchLanguage(newLanguage) {
     console.log('🔒 [GDPR DEBUG] switchLanguage() вызывает updateInterface()');
     this.updateInterface();
     this.updateLanguageButtons();
+
+    // ✅ GDPR: Обновляем тексты при смене языка
+    if (this.gdprManager) {
+        console.log('🔒 [GDPR DEBUG] switchLanguage() вызывает gdprManager.updateTexts()');
+        this.gdprManager.updateTexts();
+    }
+
     // Обновляем список конфигураций на новом языке
 if (this.configSelect) {
     this.updateConfigSelectOptions();
