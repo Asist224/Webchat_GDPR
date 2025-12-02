@@ -1211,11 +1211,21 @@ this.monitoringInterval = null;
         // DEBUG логирование
         console.log('🔒 [GDPR DEBUG] initGDPR() вызван');
         console.log('🔒 [GDPR DEBUG] this.config.gdpr =', this.config.gdpr);
+        console.log('🔒 [GDPR DEBUG] GlobalConfigSettings.gdpr =', window.GlobalConfigSettings?.gdpr);
         console.log('🔒 [GDPR DEBUG] this.widget =', this.widget);
 
-        if (!this.config.gdpr?.enabled) {
+        // ✅ ИСПРАВЛЕНИЕ: Берем gdpr из config или из GlobalConfigSettings
+        const gdprConfig = this.config.gdpr || window.GlobalConfigSettings?.gdpr;
+
+        // Сохраняем в this.config для использования в других методах
+        if (!this.config.gdpr && gdprConfig) {
+            this.config.gdpr = gdprConfig;
+            console.log('🔒 [GDPR DEBUG] GDPR config взят из GlobalConfigSettings');
+        }
+
+        if (!gdprConfig?.enabled) {
             this.gdprReady = true;
-            console.log('🔒 [GDPR DEBUG] GDPR отключен - this.config.gdpr?.enabled =', this.config.gdpr?.enabled);
+            console.log('🔒 [GDPR DEBUG] GDPR отключен - gdprConfig?.enabled =', gdprConfig?.enabled);
             this.log('info', '🔒 GDPR отключен в настройках');
             return;
         }

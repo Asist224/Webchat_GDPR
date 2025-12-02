@@ -167,6 +167,70 @@ const GlobalConfigSettings = {
         enabled: true,
         speed: 70,
         chunkType: "word"
+    },
+    // ═══════════════════════════════════════════════════════════
+    // GDPR НАСТРОЙКИ (глобальные для всех конфигураций)
+    // ═══════════════════════════════════════════════════════════
+    gdpr: {
+        enabled: true,                         // Мастер-переключатель GDPR
+        mode: 'strict',                        // 'strict' | 'balanced' | 'minimal'
+        privacyPolicyUrl: '',                  // URL политики конфиденциальности
+        privacyPolicyVersion: '1.0',
+        termsOfServiceUrl: '',
+        cookiePolicyUrl: '',
+        consentBanner: {
+            enabled: true,
+            blockChat: true,
+            position: 'bottom',
+            expireDays: 365,
+            showDeclineButton: true,
+            showPrivacyLink: true,
+            showCookieLink: false,
+            showTermsLink: false,
+            customText: null,
+            animation: 'slide'
+        },
+        preChatForm: {
+            enabled: false,                      // По умолчанию выключена
+            showAfterConsent: true,
+            fields: [
+                { id: 'name', type: 'text', required: true, isPII: true },
+                { id: 'email', type: 'email', required: true, isPII: true }
+            ],
+            gdprCheckbox: { enabled: true, required: true, linkToPrivacy: true },
+            submitToWebhook: true
+        },
+        aiDisclosure: {
+            enabled: true,
+            showBadge: true,
+            showInWelcome: true
+        },
+        privacyControls: {
+            enabled: true,
+            showInHeader: true,
+            options: {
+                viewData: true,
+                exportData: true,
+                deleteHistory: true,
+                revokeConsent: true,
+                deleteAllData: true
+            }
+        },
+        securityIndicators: {
+            showSecureBadge: true
+        },
+        webhooks: {
+            consent: '',
+            preChatForm: '',
+            dataAccess: '',
+            dataExport: '',
+            dataDelete: ''
+        },
+        advanced: {
+            httpsOnly: false,                    // false для тестирования на localhost
+            debugMode: true,                     // Включить debug логи
+            storagePrefix: 'nexusmind_gdpr_'
+        }
     }
 };
 
