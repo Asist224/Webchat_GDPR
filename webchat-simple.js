@@ -1238,16 +1238,18 @@ this.monitoringInterval = null;
         const shouldBlock = this.gdprManager.shouldBlockChat();
         const hasConsent = this.gdprManager.hasConsent();
         const isPreChatRequired = this.gdprManager.isPreChatRequired();
+        const isDeclined = this.gdprManager.consentDeclined;  // ✅ Проверяем явный отказ
 
         console.log('🔒 [GDPR DEBUG] shouldBlockChat =', shouldBlock);
         console.log('🔒 [GDPR DEBUG] hasConsent =', hasConsent);
+        console.log('🔒 [GDPR DEBUG] consentDeclined =', isDeclined);
         console.log('🔒 [GDPR DEBUG] isPreChatRequired =', isPreChatRequired);
 
         if (shouldBlock) {
             // Показываем consent banner или declined message
-            if (hasConsent === false) {
-                // Пользователь ранее отклонил - показываем declined message
-                console.log('🔒 [GDPR DEBUG] Показываю declined message');
+            if (isDeclined) {
+                // Пользователь ранее ЯВНО отклонил - показываем declined message
+                console.log('🔒 [GDPR DEBUG] Показываю declined message (пользователь отклонил)');
                 this.gdprManager.showDeclinedMessage();
             } else if (!hasConsent) {
                 // Еще не давал согласие - показываем banner
