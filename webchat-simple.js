@@ -483,12 +483,18 @@ class GDPRManager {
     }
 
     showConsentBanner() {
-        const container = this.chat.widget?.querySelector('.webchat-body') || this.chat.widget;
+        const container = this.chat.widget;
         if (container) {
             const existingBanner = document.getElementById('gdprConsentBanner');
             if (existingBanner) existingBanner.remove();
 
-            container.insertAdjacentHTML('afterbegin', this.renderConsentBanner());
+            // Вставляем баннер после header
+            const header = container.querySelector('.webchat-header');
+            if (header) {
+                header.insertAdjacentHTML('afterend', this.renderConsentBanner());
+            } else {
+                container.insertAdjacentHTML('afterbegin', this.renderConsentBanner());
+            }
             this.setupEventListeners();
         }
     }
@@ -502,9 +508,14 @@ class GDPRManager {
     }
 
     showPreChatForm() {
-        const container = this.chat.widget?.querySelector('.webchat-body') || this.chat.widget;
+        const container = this.chat.widget;
         if (container) {
-            container.insertAdjacentHTML('afterbegin', this.renderPreChatForm());
+            const header = container.querySelector('.webchat-header');
+            if (header) {
+                header.insertAdjacentHTML('afterend', this.renderPreChatForm());
+            } else {
+                container.insertAdjacentHTML('afterbegin', this.renderPreChatForm());
+            }
             this.setupEventListeners();
         }
     }
@@ -518,9 +529,14 @@ class GDPRManager {
     }
 
     showDeclinedMessage() {
-        const container = this.chat.widget?.querySelector('.webchat-body') || this.chat.widget;
+        const container = this.chat.widget;
         if (container) {
-            container.insertAdjacentHTML('afterbegin', this.renderDeclinedMessage());
+            const header = container.querySelector('.webchat-header');
+            if (header) {
+                header.insertAdjacentHTML('afterend', this.renderDeclinedMessage());
+            } else {
+                container.insertAdjacentHTML('afterbegin', this.renderDeclinedMessage());
+            }
             this.setupEventListeners();
         }
     }
